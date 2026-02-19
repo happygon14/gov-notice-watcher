@@ -1,17 +1,29 @@
-name: Run Python Test
+name: Check MSIT Notice
 
 on:
-  workflow_dispatch:   # 수동 실행 버튼
+  schedule:
+    - cron: '0 21 * * *'   # UTC 21:00 = KST 06:00
+  workflow_dispatch:
 
 jobs:
-  test:
+  run-check:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - run: python check_notice.py
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run notice checker
+        run: python check_notice.py
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
