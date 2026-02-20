@@ -1,63 +1,48 @@
 import requests
 from bs4 import BeautifulSoup
-import smtplib
-from email.mime.text import MIMEText
+import re
+import os
 
-# ---- 1. 과기부 행정예고 게시판
-URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
+# 🔹 목록 페이지 URL (여기 네 사이트 주소로 바꿔)
+LIST_URL = "https://사이트주소/list.do"
 
-def get_latest_notice():
-    res = requests.get(URL)
-    res.raise_for_status()
-    soup = BeautifulSoup(res.text, "html.parser")
+def get_latest_notice_id():
+    response = requests.get(LIST_URL, timeout=10)
+    response.raise_for_status()
 
-    # 게시판의 가장 첫번째 row
-    # 실제로는 CSS selector 구조에 따라 살짝 바뀔 수 있어
-    row = soup.select_one("table tbody tr")
-    title = row.select_one("td a").get_text(strip=True)
-    link = row.select_one("td a")["href"]
-    # 절대경로로 만들어주기
-    link = "https://www.msit.go.kr" + link
+    soup = BeautifulSoup(response.text, "html.parser")
 
-    return title, link
+    # 첫 번째 공지 선택
+    first_notice = soup.select_one(".toggle a")
 
-# ---- 2. 이전 글 비교
-def is_new_notice(title):
-    try:
-        with open("last_notice.txt", "r", encoding="utf-8") as f:
-            old_title = f.read().strip()
-    except FileNotFoundError:
-        old_title = ""
+    if not first_notice:
+        raise Exception("게시글을 찾을 수 없습니다.")
 
-    if title != old_title:
-        with open("last_notice.txt", "w", encoding="utf-8") as f:
-            f.write(title)
-        return True
-    return False
+    onclick = first_notice.get("onclick", "")
 
-# ---- 3. 이메일 전송 함수
-def send_email(subject, body):
-    # 환경변수 받기 (GitHub Secrets에 넣을 것)
-    import os
-    sender = os.environ["EMAIL_USER"]
-    password = os.environ["EMAIL_PASS"]
+    # fn_detail(3186342);
+    match = re.search(r"\d+", onclick)
+    if not match:
+        raise Exception("게시글 번호를 찾을 수 없습니다.")
 
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = "jaegon@lguplus.co.kr"
+    return match.group()
 
-    with smtplib.SMTP("smtp.office365.com", 587) as server:
-        server.starttls()
-        server.login(sender, password)
-        server.send_message(msg)
+def main():
+    latest_id = get_latest_notice_id()
 
-# ---- 4. 메인 실행부
-if __name__ == "__main__":
-    title, link = get_latest_notice()
-    message_body = f"{title}\n{link}"
-
-    if is_new_notice(title):
-        send_email("📌 신규 과기부 행정예고가 있습니다!", message_body)
+    # 이전 ID 읽기
+    if os.path.exists("last_id.txt"):
+        with open("last_id.txt", "r") as f:
+            old_id = f.read().strip()
     else:
-        send_email("✔ 과기부 행정예고 변동 없음", "새 공고가 없습니다.")
+        old_id = None
+
+    if latest_id != old_id:
+        print("새 공지 발견!")
+        with open("last_id.txt", "w") as f:
+            f.write(latest_id)
+    else:
+        print("변경 없음")
+
+if __name__ == "__main__":
+    main()
