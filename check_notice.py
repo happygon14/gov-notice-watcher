@@ -53,7 +53,7 @@ def get_latest_notice():
     raise Exception("게시글을 찾을 수 없습니다.")
 
 
-def send_email(title, link):
+def send_email(title):
     subject = "📢 새 공지 발견!"
     body = f"""새 공지가 등록되었습니다.
 
