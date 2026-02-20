@@ -2,17 +2,29 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import os
+import smtplib
+from email.mime.text import MIMEText
 
-# 🔹 목록 페이지 URL (여기 네 사이트 주소로 바꿔)
-LIST_URL = "https://사이트주소/list.do"
+# ✅ MSIT 공고 목록 페이지
+LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
 
-def get_latest_notice_id():
-    response = requests.get(LIST_URL, timeout=10)
+# ✅ GitHub Secrets에서 불러오기
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+TO_EMAIL = os.environ.get("TO_EMAIL")
+
+
+def get_latest_notice():
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    response = requests.get(LIST_URL, headers=headers, timeout=10)
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # 첫 번째 공지 선택
+    # 첫 번째 게시글 선택
     first_notice = soup.select_one(".toggle a")
 
     if not first_notice:
@@ -25,12 +37,41 @@ def get_latest_notice_id():
     if not match:
         raise Exception("게시글 번호를 찾을 수 없습니다.")
 
-    return match.group()
+    notice_id = match.group()
+
+    # 제목
+    title_tag = soup.select_one(".title")
+    title = title_tag.text.strip()
+
+    # 상세 링크 생성
+    detail_url = f"https://www.msit.go.kr/bbs/view.do?sCode=user&mPid=103&mId=109&nttSeqNo={notice_id}"
+
+    return notice_id, title, detail_url
+
+
+def send_email(title, link):
+    subject = "📢 새 공지 발견!"
+    body = f"""새 공지가 등록되었습니다.
+
+제목: {title}
+
+링크:
+{link}
+"""
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_ADDRESS
+    msg["To"] = TO_EMAIL
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.send_message(msg)
+
 
 def main():
-    latest_id = get_latest_notice_id()
+    latest_id, title, link = get_latest_notice()
 
-    # 이전 ID 읽기
     if os.path.exists("last_id.txt"):
         with open("last_id.txt", "r") as f:
             old_id = f.read().strip()
@@ -39,10 +80,13 @@ def main():
 
     if latest_id != old_id:
         print("새 공지 발견!")
+        send_email(title, link)
+
         with open("last_id.txt", "w") as f:
             f.write(latest_id)
     else:
         print("변경 없음")
+
 
 if __name__ == "__main__":
     main()
