@@ -24,29 +24,28 @@ def get_latest_notice():
 
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # 첫 번째 게시글 선택
-    first_notice = soup.select_one(".toggle a")
+    # fn_detail 포함된 링크만 찾기
+    notice_links = soup.find_all("a", onclick=True)
 
-    if not first_notice:
-        raise Exception("게시글을 찾을 수 없습니다.")
+    for link in notice_links:
+        onclick = link.get("onclick", "")
+        if "fn_detail" in onclick:
+            match = re.search(r"\d+", onclick)
+            if match:
+                notice_id = match.group()
 
-    onclick = first_notice.get("onclick", "")
+                # 제목은 내부 p.title에서 가져오기
+                title_tag = link.select_one(".title")
+                if title_tag:
+                    title = title_tag.text.strip()
+                else:
+                    title = link.text.strip()
 
-    # fn_detail(3186342);
-    match = re.search(r"\d+", onclick)
-    if not match:
-        raise Exception("게시글 번호를 찾을 수 없습니다.")
+                detail_url = f"https://www.msit.go.kr/bbs/view.do?sCode=user&mPid=103&mId=109&nttSeqNo={notice_id}"
 
-    notice_id = match.group()
+                return notice_id, title, detail_url
 
-    # 제목
-    title_tag = soup.select_one(".title")
-    title = title_tag.text.strip()
-
-    # 상세 링크 생성
-    detail_url = f"https://www.msit.go.kr/bbs/view.do?sCode=user&mPid=103&mId=109&nttSeqNo={notice_id}"
-
-    return notice_id, title, detail_url
+    raise Exception("게시글을 찾을 수 없습니다.")
 
 
 def send_email(title, link):
