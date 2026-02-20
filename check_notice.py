@@ -59,8 +59,8 @@ def send_email(title, link):
 
 제목: {title}
 
-링크:
-{link}
+목록 바로가기:
+https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109
 """
 
     msg = MIMEText(body)
@@ -84,7 +84,7 @@ def main():
 
     if latest_id != old_id:
         print("새 공지 발견!")
-        send_email(title, link)
+        send_email(title)
 
         with open("last_id.txt", "w") as f:
             f.write(latest_id)
