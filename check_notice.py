@@ -20,9 +20,9 @@ print("TO_EMAIL:", TO_EMAIL)
 
 
 def get_latest_notice():                              # 공지 가져오는 함수
-    headers = {
-        "User-Agent": "Mozilla/5.0"                   # 사이트가 봇 차단 할수 있어서 브라우저인척 하는 명령어
-    }
+    
+    headers = {"User-Agent": "Mozilla/5.0"}                   # 사이트가 봇 차단 할수 있어서 브라우저인척 하는 명령어
+    
 
     response = requests.get(LIST_URL, headers=headers, timeout=10)     # 웹사이트 HTML 가져오기
     response.raise_for_status()
@@ -40,13 +40,10 @@ def get_latest_notice():                              # 공지 가져오는 함�
                 notice_id = match.group()                        # URL에서 nttSeqNo 번호만 추출
 
                 # 제목은 내부 p.title에서 가져오기
-                title_tag = link.select_one(".title")
-                if title_tag:
-                    title = title_tag.text.strip()               # 제모 가져오기
-                else:
-                    title = link.text.strip()
-
+                title = link.get_text(strip=True)
                 detail_url = f"https://www.msit.go.kr/bbs/view.do?sCode=user&mPid=103&mId=109&nttSeqNo={notice_id}"
+
+                print("크롤링된 제목:", title)
 
                 return notice_id, title, detail_url              # 최신글 id + 제목 반환.
 
