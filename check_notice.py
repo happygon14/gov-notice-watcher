@@ -9,9 +9,9 @@ from email.mime.text import MIMEText
 LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
 
 # ✅ GitHub Secrets에서 불러오기
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
-TO_EMAIL = os.environ.get("TO_EMAIL")
+print("EMAIL_ADDRESS:", EMAIL_ADDRESS)
+print("EMAIL_PASSWORD:", EMAIL_PASSWORD)
+print("TO_EMAIL:", TO_EMAIL)
 
 
 def get_latest_notice():
