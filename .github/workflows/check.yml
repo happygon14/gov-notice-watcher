@@ -1,4 +1,4 @@
-name: Check Notice
+name: Check MSIT Notice
 
 on:
   schedule:
