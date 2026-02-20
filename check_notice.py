@@ -21,12 +21,28 @@ print("TO_EMAIL:", TO_EMAIL)
 
 def get_latest_notice():                              # 공지 가져오는 함수
     
-    headers = {"User-Agent": "Mozilla/5.0"}                   # 사이트가 봇 차단 할수 있어서 브라우저인척 하는 명령어
+    headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/121.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Connection": "keep-alive",
+    "Referer": LIST_URL
+}
+    
+    # 사이트가 봇 차단 할수 있어서 브라우저인척 하는 명령어
     
 
     response = requests.get(LIST_URL, headers=headers, timeout=10)     # 웹사이트 HTML 가져오기
     response.raise_for_status()
 
+
+    print("DEBUG status:", response.status_code)
+    print("DEBUG length:", len(response.text))
+    print(response.text[:1000])
+
+    
     soup = BeautifulSoup(response.text, "html.parser")                 # HTML 분석 준비
 
     # fn_detail 포함된 링크만 찾기
