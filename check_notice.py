@@ -45,6 +45,10 @@ def get_latest_notice():                              # 공지 가져오는 함�
 
                 print("크롤링된 제목:", title)
 
+
+                print("DEBUG link:", link)
+                print("DEBUG title:", title)
+                
                 return notice_id, title, detail_url              # 최신글 id + 제목 반환.
 
     raise Exception("게시글을 찾을 수 없습니다.")
@@ -52,7 +56,7 @@ def get_latest_notice():                              # 공지 가져오는 함�
 
 def send_email(title):                                            # 메일 보내는 기능 시작
     subject = "📢 새 공지 발견!"                                  # 메일 제목 설정
-    body = f"""새 공지가 등록되었습니다.                           # 메일 내용 작성 f" " " → 문자열 안에 변수 넣기 가
+    body = f"""새 공지가 등록되었습니다.           
 
 제목: {title}
 
