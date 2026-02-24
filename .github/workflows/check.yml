@@ -17,7 +17,7 @@ name: Check MSIT Notice                            # 워크플로우의 이름. 
 
 on:                                                # 언제실행할건지를 정의 (이게 자동화의 핵심 트리거)
   schedule:                                        # 정해진 시간마다 실행하겠음.
-    - cron: "*/30 * * * *"   # 30분마다 실행    ,리눅스 시간예약문법   분 시 일 월 요일
+    - cron: "0 0,6 * * *"   # 00시(한국시간9시), 06시(한국시간15시) 하루 두번실행    ,리눅스 시간예약문법   분 시 일 월 요일
   workflow_dispatch:                               # 수동실행버튼 (GitHub → Action → Run workflow 버튼 생김)
 
 permissions:
