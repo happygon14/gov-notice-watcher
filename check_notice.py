@@ -1,10 +1,10 @@
 import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 import re
 import os
 import smtplib
 import urllib3
-import cloudscraper
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -13,21 +13,20 @@ from email import encoders
 
 urllib3.disable_warnings()
 
-session = requests.Session()
-
-scraper = cloudscraper.create_scraper()
-
-response = scraper.get(
-    LIST_URL,
-    timeout=20,
-)
-
 
 # ✅ MSIT 공고 목록 페이지
 LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
 
-# ✅ GitHub Secrets에서 불러오기 (GitHub에 저장한 비밀값 꺼내는 코드)
 
+# ✅ scraper 생성 (cloudscraper)
+scraper = cloudscraper.create_scraper()
+
+
+# ✅ requests session (첨부 다운로드용)
+session = requests.Session()
+
+
+# ✅ GitHub Secrets
 EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 TO_EMAIL = os.environ.get("TO_EMAIL")
@@ -35,7 +34,6 @@ TO_EMAIL = os.environ.get("TO_EMAIL")
 print("EMAIL_ADDRESS:", EMAIL_ADDRESS)
 print("EMAIL_PASSWORD:", EMAIL_PASSWORD)
 print("TO_EMAIL:", TO_EMAIL)
-
 
 
 # =========================
@@ -52,7 +50,7 @@ def get_latest_notice():
         "Referer": "https://www.msit.go.kr/",
     }
 
-    response = session.get(
+    response = scraper.get(
         LIST_URL,
         headers=headers,
         timeout=20,
