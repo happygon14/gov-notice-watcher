@@ -1,10 +1,12 @@
 import requests
 import cloudscraper
+import subprocess
 from bs4 import BeautifulSoup
 import re
 import os
 import smtplib
 import urllib3
+
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -42,23 +44,29 @@ print("TO_EMAIL:", TO_EMAIL)
 
 def get_latest_notice():
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "ko-KR,ko;q=0.9",
-        "Connection": "keep-alive",
-        "Referer": "https://www.msit.go.kr/",
-    }
+    headers = [
+        "-H", "User-Agent: Mozilla/5.0",
+        "-H", "Accept: text/html",
+        "-H", "Accept-Language: ko-KR,ko;q=0.9",
+        "-H", "Referer: https://www.msit.go.kr/",
+    ]
 
-    response = scraper.get(
+    cmd = [
+        "curl",
+        "-L",
         LIST_URL,
-        headers=headers,
-        timeout=20,
+        *headers
+    ]
+
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
     )
 
-    response.raise_for_status()
+    html = result.stdout
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(html, "html.parser")
 
     links = soup.find_all("a", onclick=True)
 
@@ -85,7 +93,6 @@ def get_latest_notice():
                 return notice_id, title, detail_url
 
     raise Exception("공지 못찾음")
-
 
 # =========================
 # 첨부파일 정보 찾기
