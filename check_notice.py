@@ -54,7 +54,6 @@ def get_latest_notice():
         LIST_URL,
         headers=headers,
         timeout=20,
-        verify=False,
     )
 
     response.raise_for_status()
