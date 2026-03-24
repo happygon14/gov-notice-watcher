@@ -30,9 +30,16 @@ print("TO_EMAIL:", TO_EMAIL)
 
 class TLSAdapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
+
         ctx = ssl.create_default_context()
+
+        ctx.check_hostname = False   # ⭐ 추가
+        ctx.verify_mode = ssl.CERT_NONE   # ⭐ 추가
+
         ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+
         kwargs["ssl_context"] = ctx
+
         return super().init_poolmanager(*args, **kwargs)
         
 
