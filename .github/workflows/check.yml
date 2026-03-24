@@ -34,7 +34,7 @@ jobs:                                              # 실제 작업들을 정의
       - name: Python 설치                           # 파이썬 3.10 설치 (왜냐면 파이썬이 없을수도 있으니깐)
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: 라이브러리 설치                        # 리눅스 터미널 명령어 실행, 크롤링 라이브러리 설치단계
         run: pip install requests beautifulsoup4 cloudscraper
