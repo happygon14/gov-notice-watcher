@@ -4,6 +4,7 @@ import re
 import os
 import smtplib
 import urllib3
+import cloudscraper
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -13,10 +14,6 @@ from email import encoders
 urllib3.disable_warnings()
 
 session = requests.Session()
-
-pip install cloudscraper
-
-import cloudscraper
 
 scraper = cloudscraper.create_scraper()
 
