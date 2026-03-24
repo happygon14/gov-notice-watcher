@@ -4,6 +4,10 @@ import re                                  #
 import os                                  # 환경변수 읽기 (GitHub Secrets)
 import smtplib                             # 메일보내기
 from email.mime.text import MIMEText       # 메일 내용 포맷 만들기
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+
 
 # ✅ MSIT 공고 목록 페이지
 LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
@@ -69,25 +73,86 @@ def get_latest_notice():                              # 공지 가져오는 함�
 
     raise Exception("게시글을 찾을 수 없습니다.")
 
+# ✅ 파일 다운로드 함수
 
-def send_email(title):                                            # 메일 보내는 기능 시작
-    subject = "📢 새 공지 발견!"                                  # 메일 제목 설정
-    body = f"""새 공지가 등록되었습니다.           
+def download_file(file_id, file_sn, ext):
 
-제목: {title}
+    url = "https://www.msit.go.kr/ssm/file/fileDown.do"
 
-목록 바로가기:
-https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109
-"""
+    data = {
+        "fileId": file_id,
+        "fileSn": file_sn,
+        "fileExt": ext
+    }
 
-    msg = MIMEText(body)                                            # 메일본문 생성
-    msg["Subject"] = subject                                        # 메일 헤더정보 설정(아래 2줄 포함)
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": LIST_URL
+    }
+
+    res = requests.post(url, data=data, headers=headers)
+
+    filename = f"attach.{ext}"
+
+    with open(filename, "wb") as f:
+        f.write(res.content)
+
+    return filename
+
+
+# ✅ 첨부파일 정보 추출
+
+def get_attachment_info(detail_url):
+
+    res = requests.get(detail_url)
+    soup = BeautifulSoup(res.text, "html.parser")
+
+    links = soup.find_all("a", onclick=True)
+
+    for a in links:
+        onclick = a.get("onclick", "")
+
+        if "fn_download" in onclick:
+
+            m = re.findall(r"'(.*?)'", onclick)
+
+            if len(m) >= 3:
+                file_id = m[0]
+                file_sn = m[1]
+                ext = m[2]
+
+                return file_id, file_sn, ext
+
+    return None, None, None
+
+
+def send_email(title, filepath):
+
+    msg = MIMEMultipart()
+
+    msg["Subject"] = "📢 새 공지 발견!"
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:          # Gmail 서버연결 (465는 SSL포트)
-        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)                  # Gmail 로그인
-        server.send_message(msg)                                     # 메일 발송
+    body = f"새 공지: {title}"
+    msg.attach(MIMEText(body, "plain"))
+
+    with open(filepath, "rb") as f:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(f.read())
+
+    encoders.encode_base64(part)
+
+    part.add_header(
+        "Content-Disposition",
+        f'attachment; filename="{filepath}"'
+    )
+
+    msg.attach(part)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.send_message(msg)
 
 
 def main():
