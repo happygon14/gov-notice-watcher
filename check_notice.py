@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup              # HTML 파싱해서 원하는 정보 
 import re                                  # 
 import os                                  # 환경변수 읽기 (GitHub Secrets)
 import smtplib                             # 메일보내기
+import urllib3
+urllib3.disable_warnings()
 from email.mime.text import MIMEText       # 메일 내용 포맷 만들기
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -24,21 +26,30 @@ print("TO_EMAIL:", TO_EMAIL)
 
 
 def get_latest_notice():                              # 공지 가져오는 함수
+
     
+    session = requests.Session()
+
     headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/121.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Connection": "keep-alive",
-    "Referer": LIST_URL
-}
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/121.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Connection": "keep-alive",
+        "Referer": LIST_URL
+    }
     
     # 사이트가 봇 차단 할수 있어서 브라우저인척 하는 명령어
     
 
-    response = requests.get(LIST_URL, headers=headers, timeout=10)     # 웹사이트 HTML 가져오기
+    response = session.get(
+        LIST_URL,
+        headers=headers,
+        timeout=20,
+        verify=False   # ⭐ 중요
+    )     # 웹사이트 HTML 가져오기
+    
     response.raise_for_status()
 
 
@@ -104,7 +115,9 @@ def download_file(file_id, file_sn, ext):
 
 def get_attachment_info(detail_url):
 
-    res = requests.get(detail_url)
+    session = requests.Session()
+    
+    res = session.get(detail_url, verify=False)
     soup = BeautifulSoup(res.text, "html.parser")
 
     links = soup.find_all("a", onclick=True)
@@ -156,22 +169,33 @@ def send_email(title, filepath):
 
 
 def main():
-    latest_id, title, link = get_latest_notice()                     # id, title, link 가져오기
+
+    latest_id, title, link = get_latest_notice()
 
     if os.path.exists("last_id.txt"):
-        with open("last_id.txt", "r") as f:                          # 이전에 저장해둔 ID 읽기
+        with open("last_id.txt", "r") as f:
             old_id = f.read().strip()
     else:
         old_id = None
 
-    if latest_id != old_id:                                          # 최신ID가 기존ID와 다르면
-        print("새 공지 발견!")                                        # 새 공지발견 텍스트를
-        send_email(title)                                            # 메일로 보내
+    if latest_id != old_id:
 
-        with open("last_id.txt", "w") as f:                          # txt파일 불러내서
-            f.write(latest_id)                                       # 새로운 id 저장
+        print("새 공지 발견!")
+
+        # ✅ 첨부파일 정보 가져오기
+        file_id, file_sn, ext = get_attachment_info(link)
+
+        # ✅ 파일 다운로드
+        filepath = download_file(file_id, file_sn, ext)
+
+        # ✅ 메일 보내기 (첨부 포함)
+        send_email(title, filepath)
+
+        with open("last_id.txt", "w") as f:
+            f.write(latest_id)
+
     else:
-        print("변경 없음")                                           # 다르지않다면 변경없음 확인 후 아무행위없음
+        print("변경 없음")
 
 
 if __name__ == "__main__":                                           # 이 파일이 직접 실행될 때만 main() 실행. GitHub Action가 여기서 시작함.
