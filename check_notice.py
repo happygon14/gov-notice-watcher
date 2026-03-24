@@ -5,6 +5,9 @@ import os                                  # 환경변수 읽기 (GitHub Secrets
 import smtplib                             # 메일보내기
 import urllib3
 urllib3.disable_warnings()
+import ssl
+from requests.adapters import HTTPAdapter
+from urllib3.poolmanager import PoolManager
 from email.mime.text import MIMEText       # 메일 내용 포맷 만들기
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -25,31 +28,34 @@ print("EMAIL_PASSWORD:", EMAIL_PASSWORD)
 print("TO_EMAIL:", TO_EMAIL)
 
 
+class TLSAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = ssl.create_default_context()
+        ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+        kwargs["ssl_context"] = ctx
+        return super().init_poolmanager(*args, **kwargs)
+        
+
 def get_latest_notice():                              # 공지 가져오는 함수
 
-    
+
     session = requests.Session()
+    session.mount("https://", TLSAdapter())
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/121.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "*/*",
         "Connection": "keep-alive",
-        "Referer": LIST_URL
+        "Referer": LIST_URL,
     }
-    
-    # 사이트가 봇 차단 할수 있어서 브라우저인척 하는 명령어
-    
 
     response = session.get(
         LIST_URL,
         headers=headers,
-        timeout=20,
-        verify=False   # ⭐ 중요
-    )     # 웹사이트 HTML 가져오기
-    
+        timeout=30,
+        verify=False,
+    )
+
     response.raise_for_status()
 
 
@@ -88,6 +94,9 @@ def get_latest_notice():                              # 공지 가져오는 함�
 
 def download_file(file_id, file_sn, ext):
 
+    session = requests.Session()
+    session.mount("https://", TLSAdapter())
+    
     url = "https://www.msit.go.kr/ssm/file/fileDown.do"
 
     data = {
@@ -101,8 +110,7 @@ def download_file(file_id, file_sn, ext):
         "Referer": LIST_URL
     }
 
-    res = requests.post(url, data=data, headers=headers)
-
+    res = session.post(url, data=data, headers=headers, verify=False)
     filename = f"attach.{ext}"
 
     with open(filename, "wb") as f:
@@ -116,6 +124,7 @@ def download_file(file_id, file_sn, ext):
 def get_attachment_info(detail_url):
 
     session = requests.Session()
+    session.mount("https://", TLSAdapter())
     
     res = session.get(detail_url, verify=False)
     soup = BeautifulSoup(res.text, "html.parser")
