@@ -12,6 +12,19 @@ from email import encoders
 
 urllib3.disable_warnings()
 
+session = requests.Session()
+
+pip install cloudscraper
+
+import cloudscraper
+
+scraper = cloudscraper.create_scraper()
+
+response = scraper.get(
+    LIST_URL,
+    timeout=20,
+)
+
 
 # ✅ MSIT 공고 목록 페이지
 LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
@@ -35,15 +48,18 @@ print("TO_EMAIL:", TO_EMAIL)
 def get_latest_notice():
 
     headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Referer": LIST_URL,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "ko-KR,ko;q=0.9",
+        "Connection": "keep-alive",
+        "Referer": "https://www.msit.go.kr/",
     }
 
-    response = requests.get(
+    response = session.get(
         LIST_URL,
         headers=headers,
         timeout=20,
-        verify=False
+        verify=False,
     )
 
     response.raise_for_status()
@@ -83,7 +99,7 @@ def get_latest_notice():
 
 def get_attachment_info(detail_url):
 
-    res = requests.get(detail_url, verify=False)
+    res = session.get(detail_url, verify=False)
 
     soup = BeautifulSoup(res.text, "html.parser")
 
@@ -127,7 +143,7 @@ def download_file(file_id, file_sn, ext):
         "Referer": LIST_URL,
     }
 
-    res = requests.post(
+    res = session.post(
         url,
         data=data,
         headers=headers,
