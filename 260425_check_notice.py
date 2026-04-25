@@ -208,7 +208,11 @@ def build_report_html(title, meta, content, attachments, url):
     attachment_html = ""
     if attachments:
         for fp in attachments:
-            attachment_html += f"<li>📎 {os.path.basename(fp)}</li>"
+            attachment_html += f"""
+            <li>
+            📎 <b>{os.path.basename(fp)}</b>
+            </li>
+            """
     else:
         attachment_html = "<li>첨부파일 없음</li>"
 
@@ -232,7 +236,7 @@ def build_report_html(title, meta, content, attachments, url):
             </table>
 
             <h3>📄 주요내용 요약</h3>
-            <div style="white-space:pre-wrap;background:#fafafa;padding:15px;border:1px solid #ddd;">
+            <div style="white-space:pre-wrap;background:#fafafa;padding:15px;border:1px solid #ddd;line-height:1.6;">
                 {content[:2000]}
             </div>
 
@@ -255,16 +259,22 @@ def build_report_html(title, meta, content, attachments, url):
 # =========================
 # 메일 보내기 (첨부 포함)
 # =========================
+print("EMAIL:", EMAIL_ADDRESS)
+print("TO:", TO_EMAIL)
+print("메일 보내기 직전")
 
 def send_email(title, html_body, attachments=None):
 
-    msg = MIMEMultipart("mixed")
+    msg = MIMEMultipart("alternative")
 
-    msg["Subject"] = f"📢 입법행정예고 등록: {title}"
+    msg["Subject"] = f"📢입법행정예고 등록({meta.get('부서','')}) | {title}"
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
 
-    # HTML 본문
+    # fallback (중요: Gmail 안정성)
+    text_fallback = "새 공지가 등록되었습니다. HTML 메일을 확인하세요."
+
+    msg.attach(MIMEText(text_fallback, "plain", "utf-8"))
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
     # 첨부파일
@@ -290,6 +300,8 @@ def send_email(title, html_body, attachments=None):
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
         server.send_message(msg)
+
+    print("📧 메일 전송 완료")
 
 # =========================
 # 메인
