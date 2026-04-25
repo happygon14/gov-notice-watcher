@@ -96,9 +96,15 @@ def get_latest_notice():
                 title = a.get_text(strip=True)
 
                 detail_url = (
-                    "https://www.msit.go.kr/bbs/view.do"
-                    "?sCode=user&mPid=103&mId=109"
-                    f"&nttSeqNo={notice_id}"
+                        "https://msit.go.kr/bbs/view.do"
+                        "?sCode=user"
+                        "&mId=109"
+                        "&mPid=103"
+                        "&pageIndex="
+                        "&bbsSeqNo=84"
+                        f"&nttSeqNo={notice_id}"
+                        "&searchOpt=ALL"
+                        "&searchTxt="
                 )
 
                 print(detail_url)
