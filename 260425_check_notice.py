@@ -125,7 +125,7 @@ def get_attachment_info(detail_url):
         detail_url,
         headers={
             "User-Agent":"Mozilla/5.0",
-            "Referer": "https://msit.go.kr/",
+            "Referer":"https://msit.go.kr/",
             "Accept-Language":"ko-KR,ko;q=0.9"
         },
         timeout=30,
@@ -136,6 +136,8 @@ def get_attachment_info(detail_url):
     print(res.text[:5000])
 
     links = soup.select("a[href], a[onclick]")
+
+    attachments = []
 
     for a in links:
 
@@ -152,10 +154,11 @@ def get_attachment_info(detail_url):
             m = re.findall(r"'(.*?)'", target)
 
             if len(m) >= 3:
-                return m[0], m[1], m[2]
+                attachments.append(
+                    (m[0], m[1], m[2])
+                )
 
-    
-    return None, None, None
+    return attachments
 
 
 # =========================
@@ -262,17 +265,28 @@ def main():
 
         print("새 공지 발견")
 
-        file_id, file_sn, ext = get_attachment_info(link)
+        attachments = get_attachment_info(link)
 
-        if file_id:
+            if attachments:
 
-            filepath = download_file(file_id,file_sn,ext,link)
+                filepaths = []
 
-            send_email(title, filepath)
+                for file_id, file_sn, ext in attachments:
 
-        else:
+                    filepath = download_file(
+                        file_id,
+                        file_sn,
+                        ext,
+                        link
+                    )
 
-            send_email(title, None)
+                    filepaths.append(filepath)
+
+                send_email(title, filepaths)
+
+            else:
+
+                send_email(title, None)
 
         with open("last_id.txt", "w") as f:
             f.write(latest_id)
