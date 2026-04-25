@@ -261,32 +261,34 @@ def main():
     else:
         old_id = None
 
+
     if latest_id != old_id:
 
         print("새 공지 발견")
 
         attachments = get_attachment_info(link)
 
-            if attachments:
+        if attachments:
 
-                filepaths = []
+            filepaths = []
 
-                for file_id, file_sn, ext in attachments:
+            for file_id, file_sn, ext in attachments:
 
-                    filepath = download_file(
-                        file_id,
-                        file_sn,
-                        ext,
-                        link
-                    )
+                filepath = download_file(
+                    file_id,
+                    file_sn,
+                    ext,
+                    link
+                )
 
-                    filepaths.append(filepath)
+                filepaths.append(filepath)
 
-                send_email(title, filepaths)
+            send_email(title, filepaths)
 
-            else:
+        else:
 
-                send_email(title, None)
+            send_email(title, None)
+
 
         with open("last_id.txt", "w") as f:
             f.write(latest_id)
