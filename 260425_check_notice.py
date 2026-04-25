@@ -89,7 +89,7 @@ def get_latest_notice():
 
         if "fn_detail" in onclick:
 
-            m = re.search(r"\d+", onclick)
+            m = re.search(r"\d{5,}", onclick)    
 
             if m:
                 notice_id = m.group()
@@ -101,8 +101,11 @@ def get_latest_notice():
                     f"&nttSeqNo={notice_id}"
                 )
 
+                print(detail_url)
+                
                 return notice_id,title,detail_url
 
+    
     raise Exception("공지 못찾음")
 
 # =========================
