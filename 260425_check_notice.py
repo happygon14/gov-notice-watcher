@@ -114,7 +114,15 @@ def get_latest_notice():
 
 def get_attachment_info(detail_url):
 
-    res = session.get(detail_url, verify=False)
+    res = scraper.get(
+        detail_url,
+        headers={
+            "User-Agent":"Mozilla/5.0",
+            "Referer": LIST_URL
+        },
+        timeout=30,
+        verify=False
+    )
 
     soup = BeautifulSoup(res.text, "html.parser")
     print(res.text[:5000])
@@ -190,27 +198,37 @@ def send_email(title, filepath):
 
     body = f"새 공지: {title}"
 
-    msg.attach(MIMEText(body, "plain"))
+    msg.attach(MIMEText(body,"plain"))
 
-    with open(filepath, "rb") as f:
+    if filepath:
 
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(f.read())
+        with open(filepath,"rb") as f:
+            part=MIMEBase(
+                "application",
+                "octet-stream"
+            )
+            part.set_payload(f.read())
 
-    encoders.encode_base64(part)
+        encoders.encode_base64(part)
 
-    part.add_header(
-        "Content-Disposition",
-        f'attachment; filename="{filepath}"'
-    )
+        part.add_header(
+            "Content-Disposition",
+            f'attachment; filename="{filepath}"'
+        )
 
-    msg.attach(part)
+        msg.attach(part)
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+    with smtplib.SMTP_SSL(
+        "smtp.gmail.com",
+        465
+    ) as server:
 
-        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.login(
+            EMAIL_ADDRESS,
+            EMAIL_PASSWORD
+        )
+
         server.send_message(msg)
-
 
 # =========================
 # 메인
