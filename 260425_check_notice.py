@@ -220,9 +220,9 @@ def build_report_html(title, meta, content, attachments, url):
     <html>
     <body style="font-family:Arial; background:#f6f6f6; padding:20px;">
 
-        <div style="max-width:850px;margin:auto;background:#fff;padding:25px;border-radius:10px;">
+        <div style="max-width:850px;margin:auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,0.08);">
 
-            <h2 style="border-bottom:2px solid #222;padding-bottom:10px;">
+            <h2 style="border-bottom:2px solid #222;padding-bottom:10px;font-size:20px;line-height:1.4;">
                 📢 입법행정예고 등록 ({meta.get('부서','')})<br>
                 {title}
             </h2>
@@ -263,11 +263,11 @@ print("EMAIL:", EMAIL_ADDRESS)
 print("TO:", TO_EMAIL)
 print("메일 보내기 직전")
 
-def send_email(title, html_body, attachments=None):
+def send_email(subject, html_body, attachments=None):
 
     msg = MIMEMultipart("alternative")
 
-    msg["Subject"] = f"📢입법행정예고 등록({meta.get('부서','')}) | {title}"
+    msg["Subject"] = subject
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
 
@@ -344,14 +344,19 @@ def main():
             meta[k] = v
 
         content_tag = soup.select_one("#cont-wrap")
+
+        for tag in content_tag.select("script, style"):
+            tag.decompose()
+
         content = content_tag.get_text("\n", strip=True)
 
         # ----------------------------
         # 레포트 생성
         # ----------------------------
         html = build_report_html(title, meta, content, filepaths, link)
-
-        send_email(title, html, filepaths)
+ 
+        subject = f"📢입법행정예고 등록({meta.get('부서','')}) | {title}"
+        send_email(subject, html, filepaths)
 
         with open("last_id.txt", "w") as f:
             f.write(latest_id)
