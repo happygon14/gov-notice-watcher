@@ -14,12 +14,12 @@
 
 
 name: Check MSIT Notice                            # 워크플로우의 이름. GitHub Action 탭에서 보이는 이름임. 기능에는 영향X 
-
 on:                                                # 언제실행할건지를 정의 (이게 자동화의 핵심 트리거)
-  schedule:                                        # 정해진 시간마다 실행하겠음.
-    - cron: "0 0,6 * * *"   # 00시(한국시간9시), 06시(한국시간15시) 하루 두번실행    ,리눅스 시간예약문법   분 시 일 월 요일
-  workflow_dispatch:                               # 수동실행버튼 (GitHub → Action → Run workflow 버튼 생김)
-
+  schedule:                                        # 정해진 시간마다 실행하겠음. (한국시간 월~금 6시,10시,14시,18시 4회)
+    - cron: "0 21 * * 0-4"                   # 06시(한국시간은 utc기준 +9h)
+    - cron: "0 1,5,9 * * 1-5"  # 10시,14시,18시 하루 4회
+  workflow_dispatch:
+  
 permissions:
   contents: write                                  # last_id.txt에 수정가능, commit가능, push가능
 
