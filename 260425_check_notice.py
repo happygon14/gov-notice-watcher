@@ -19,6 +19,7 @@ from email import encoders
 urllib3.disable_warnings()
 
 
+
 # ✅ MSIT 공고 목록 페이지
 LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
 
@@ -159,9 +160,9 @@ def get_attachment_info(detail_url):
 # 파일 다운로드
 # =========================
 
-def download_file(file_id, file_sn, ext):
+def download_file(file_id, file_sn, ext, detail_url):
 
-    url = "https://www.msit.go.kr/ssm/file/fileDown.do"
+    url = "https://msit.go.kr/ssm/file/fileDown.do"
 
     data = {
         "fileId": file_id,
@@ -171,20 +172,24 @@ def download_file(file_id, file_sn, ext):
 
     headers = {
         "User-Agent": "Mozilla/5.0",
-        "Referer": LIST_URL,
-        "Origin":"https://www.msit.go.kr"
-
+        "Referer": detail_url,   # 중요
+        "Origin": "https://msit.go.kr"
     }
 
     res = session.post(
         url,
         data=data,
-        headers=headers
+        headers=headers,
+        verify=False
     )
+
+    print(res.headers.get("content-disposition"))
+    print("download size=", len(res.content))
+    print(res.text[:500])   # 혹시 HTML 에러페이지인지 확인용
 
     filename = f"attach.{ext}"
 
-    with open(filename, "wb") as f:
+    with open(filename,"wb") as f:
         f.write(res.content)
 
     return filename
@@ -260,7 +265,7 @@ def main():
 
         if file_id:
 
-            filepath = download_file(file_id, file_sn, ext)
+            filepath = download_file(file_id,file_sn,ext,link)
 
             send_email(title, filepath)
 
