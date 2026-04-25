@@ -272,40 +272,31 @@ def send_email(subject, html_body, attachments=None):
 
     print("SMTP 객체 생성 전")
 
-    server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+    msg = MIMEMultipart("alternative")
 
-    print("SMTP 객체 생성 후")
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_ADDRESS
+    msg["To"] = TO_EMAIL
 
-    try:
-        print("SMTP 시작")
+    msg.attach(MIMEText("fallback", "plain", "utf-8"))
+    msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-        msg = MIMEMultipart("alternative")
+    print("SMTP 연결 시작")
 
-        msg["Subject"] = subject
-        msg["From"] = EMAIL_ADDRESS
-        msg["To"] = TO_EMAIL
+    # 🔥 여기만 교체
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
 
-        text_fallback = "새 공지가 등록되었습니다."
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
 
-        msg.attach(MIMEText(text_fallback, "plain", "utf-8"))
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
+        print("로그인")
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
 
-        print("SMTP 서버 연결")
+        print("메일 전송")
+        server.send_message(msg)
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.set_debuglevel(1)
-
-            print("로그인 시도")
-            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-
-            print("메일 전송 시도")
-            server.send_message(msg)
-
-        print("📧 메일 전송 완료")
-
-    except Exception as e:
-        print("❌ SMTP 에러 발생:", repr(e))
-        raise
+    print("메일 완료")
 
 # =========================
 # 메인
