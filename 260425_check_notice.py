@@ -167,15 +167,15 @@ def download_file(file_id, file_sn, ext, detail_url):
     url = "https://msit.go.kr/ssm/file/fileDown.do"
 
     data = {
-        "fileId": file_id,
-        "fileSn": file_sn,
-        "fileExt": ext,
+        "atchFileNo": file_id,
+        "fileOrd": file_sn,
+        "fileBtn": "A"
     }
 
     headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Referer": detail_url,   # 중요
-        "Origin": "https://msit.go.kr"
+        "User-Agent":"Mozilla/5.0",
+        "Referer": detail_url,
+        "Origin":"https://msit.go.kr"
     }
 
     res = session.post(
@@ -187,7 +187,6 @@ def download_file(file_id, file_sn, ext, detail_url):
 
     print(res.headers.get("content-disposition"))
     print("download size=", len(res.content))
-    print(res.text[:500])   # 혹시 HTML 에러페이지인지 확인용
 
     filename = f"attach.{ext}"
 
