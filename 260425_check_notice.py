@@ -120,8 +120,7 @@ def get_attachment_info(detail_url):
             "User-Agent":"Mozilla/5.0",
             "Referer": LIST_URL
         },
-        timeout=30,
-        verify=False
+        timeout=30
     )
 
     soup = BeautifulSoup(res.text, "html.parser")
@@ -174,8 +173,7 @@ def download_file(file_id, file_sn, ext):
     res = session.post(
         url,
         data=data,
-        headers=headers,
-        verify=False
+        headers=headers
     )
 
     filename = f"attach.{ext}"
