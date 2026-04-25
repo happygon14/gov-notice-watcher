@@ -69,7 +69,7 @@ def get_latest_notice():
     html = result.stdout
 
     with open("debug.html", "w", encoding="utf-8") as f:
-    f.write(html)
+        f.write(html)
 
     print("HTML LENGTH =", len(html))
 
