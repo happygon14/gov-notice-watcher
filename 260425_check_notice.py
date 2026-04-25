@@ -54,8 +54,10 @@ def get_latest_notice():
     cmd = [
         "curl",
         "-L",
-        LIST_URL,
-        *headers
+        "-A", "Mozilla/5.0",
+        "--http1.1",
+        "--compressed",
+        LIST_URL
     ]
 
     result = subprocess.run(
@@ -66,7 +68,10 @@ def get_latest_notice():
 
     html = result.stdout
 
-    print(html[:5000])   # 추가
+    with open("debug.html", "w", encoding="utf-8") as f:
+    f.write(html)
+
+    print("HTML LENGTH =", len(html))
 
     soup = BeautifulSoup(html, "html.parser")
 
