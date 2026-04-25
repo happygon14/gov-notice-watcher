@@ -260,48 +260,53 @@ def build_report_html(title, meta, content, attachments, url):
 # 메일 보내기 (첨부 포함)
 # =========================
 print("EMAIL:", EMAIL_ADDRESS)
+print("PWD length:", len(EMAIL_PASSWORD or ""))
 print("TO:", TO_EMAIL)
 print("메일 보내기 직전")
 
 def send_email(subject, html_body, attachments=None):
 
-    msg = MIMEMultipart("alternative")
+    try:
+        msg = MIMEMultipart("mixed")
 
-    msg["Subject"] = subject
-    msg["From"] = EMAIL_ADDRESS
-    msg["To"] = TO_EMAIL
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_ADDRESS
+        msg["To"] = TO_EMAIL
 
-    # fallback (중요: Gmail 안정성)
-    text_fallback = "새 공지가 등록되었습니다. HTML 메일을 확인하세요."
+        text_fallback = "새 공지가 등록되었습니다. HTML 메일을 확인하세요."
 
-    msg.attach(MIMEText(text_fallback, "plain", "utf-8"))
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
+        msg.attach(MIMEText(text_fallback, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-    # 첨부파일
-    if attachments:
+        if attachments:
+            if isinstance(attachments, str):
+                attachments = [attachments]
 
-        if isinstance(attachments, str):
-            attachments = [attachments]
+            for fp in attachments:
+                with open(fp, "rb") as f:
+                    part = MIMEBase("application", "octet-stream")
+                    part.set_payload(f.read())
 
-        for fp in attachments:
-            with open(fp, "rb") as f:
-                part = MIMEBase("application", "octet-stream")
-                part.set_payload(f.read())
+                encoders.encode_base64(part)
 
-            encoders.encode_base64(part)
+                part.add_header(
+                    "Content-Disposition",
+                    f'attachment; filename="{os.path.basename(fp)}'"
+                )
 
-            part.add_header(
-                "Content-Disposition",
-                f'attachment; filename="{os.path.basename(fp)}"'
-            )
+                msg.attach(part)
 
-            msg.attach(part)
+        print("SMTP 연결 시도")
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        server.send_message(msg)
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.set_debuglevel(1)  # 🔥 중요
+            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            server.send_message(msg)
 
-    print("📧 메일 전송 완료")
+        print("📧 메일 전송 완료")
+
+    except Exception as e:
+        print("❌ 메일 전송 실패:", str(e))
 
 # =========================
 # 메인
