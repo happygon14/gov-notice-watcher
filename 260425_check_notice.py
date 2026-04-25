@@ -114,25 +114,28 @@ def get_attachment_info(detail_url):
     res = session.get(detail_url, verify=False)
 
     soup = BeautifulSoup(res.text, "html.parser")
+    print(res.text[:5000])
 
-    links = soup.find_all("a", onclick=True)
+    links = soup.select("a[href], a[onclick]")
 
     for a in links:
 
-        onclick = a.get("onclick", "")
+        target = (
+            a.get("onclick","")
+            + " "
+            + a.get("href","")
+        )
 
-        if "fn_download" in onclick:
+        if "fn_download" in target or "fileDown" in target:
 
-            m = re.findall(r"'(.*?)'", onclick)
+            print("첨부링크 발견:", target)
+
+            m = re.findall(r"'(.*?)'", target)
 
             if len(m) >= 3:
+                return m[0], m[1], m[2]
 
-                file_id = m[0]
-                file_sn = m[1]
-                ext = m[2]
-
-                return file_id, file_sn, ext
-
+    
     return None, None, None
 
 
