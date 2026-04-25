@@ -70,30 +70,30 @@ def get_latest_notice():
 
     soup = BeautifulSoup(html, "html.parser")
 
-links = soup.select("a[href], a[onclick]")
+    links = soup.select("a[href], a[onclick]")
 
-for link in links:
+    for link in links:
 
-    onclick = link.get("onclick","")
-    href = link.get("href","")
+        onclick = link.get("onclick","")
+        href = link.get("href","")
 
-    target = onclick + href
+        target = onclick + href
 
-    if "nttSeqNo" in target or "fn_detail" in target:
+        if "nttSeqNo" in target or "fn_detail" in target:
 
-        m = re.search(r"\d{4,}", target)
+            m = re.search(r"\d{4,}", target)
 
-        if m:
-            notice_id = m.group()
-            title = link.get_text(strip=True)
+            if m:
+                notice_id = m.group()
+                title = link.get_text(strip=True)
 
-            detail_url = (
-                "https://www.msit.go.kr/bbs/view.do"
-                "?sCode=user&mPid=103&mId=109"
-                f"&nttSeqNo={notice_id}"
-            )
+                detail_url = (
+                    "https://www.msit.go.kr/bbs/view.do"
+                    "?sCode=user&mPid=103&mId=109"
+                    f"&nttSeqNo={notice_id}"
+                )
 
-            return notice_id, title, detail_url
+                return notice_id, title, detail_url
 
     raise Exception("공지 못찾음")
 
