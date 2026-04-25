@@ -121,13 +121,15 @@ def get_latest_notice():
 
 def get_attachment_info(detail_url):
 
-    res = scraper.get(
+    res = session.get(
         detail_url,
         headers={
             "User-Agent":"Mozilla/5.0",
-            "Referer": LIST_URL
+            "Referer": "https://msit.go.kr/",
+            "Accept-Language":"ko-KR,ko;q=0.9"
         },
-        timeout=30
+        timeout=30,
+        verify=False
     )
 
     soup = BeautifulSoup(res.text, "html.parser")
