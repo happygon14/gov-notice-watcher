@@ -267,48 +267,35 @@ print("메일 보내기 직전")
 def send_email(subject, html_body, attachments=None):
 
     try:
-        msg = MIMEMultipart("mixed")
+        print("SMTP 시작")
+
+        msg = MIMEMultipart("alternative")
 
         msg["Subject"] = subject
         msg["From"] = EMAIL_ADDRESS
         msg["To"] = TO_EMAIL
 
-        text_fallback = "새 공지가 등록되었습니다. HTML 메일을 확인하세요."
+        text_fallback = "새 공지가 등록되었습니다."
 
         msg.attach(MIMEText(text_fallback, "plain", "utf-8"))
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-        if attachments:
-            if isinstance(attachments, str):
-                attachments = [attachments]
-
-            for fp in attachments:
-                with open(fp, "rb") as f:
-                    part = MIMEBase("application", "octet-stream")
-                    part.set_payload(f.read())
-
-                encoders.encode_base64(part)
-
-                filename = os.path.basename(fp)
-
-                part.add_header(
-                    "Content-Disposition",
-                    f'attachment; filename="{filename}"'
-                )
-
-                msg.attach(part)
-
-        print("SMTP 연결 시도")
+        print("SMTP 서버 연결")
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.set_debuglevel(1)  # 🔥 중요
+            server.set_debuglevel(1)
+
+            print("로그인 시도")
             server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+
+            print("메일 전송 시도")
             server.send_message(msg)
 
         print("📧 메일 전송 완료")
 
     except Exception as e:
-        print("❌ 메일 전송 실패:", str(e))
+        print("❌ SMTP 에러 발생:", repr(e))
+        raise
 
 # =========================
 # 메인
