@@ -217,21 +217,22 @@ def send_email(title, filepath):
 
     if filepath:
 
-        with open(filepath,"rb") as f:
-            part=MIMEBase(
-                "application",
-                "octet-stream"
+        if isinstance(filepath, str):
+            filepath = [filepath]
+
+        for fp in filepath:
+            with open(fp,"rb") as f:
+                part = MIMEBase("application","octet-stream")
+                part.set_payload(f.read())
+
+            encoders.encode_base64(part)
+
+            part.add_header(
+                "Content-Disposition",
+                f'attachment; filename="{os.path.basename(fp)}"'
             )
-            part.set_payload(f.read())
 
-        encoders.encode_base64(part)
-
-        part.add_header(
-            "Content-Disposition",
-            f'attachment; filename="{filepath}"'
-        )
-
-        msg.attach(part)
+            msg.attach(part)
 
     with smtplib.SMTP_SSL(
         "smtp.gmail.com",
