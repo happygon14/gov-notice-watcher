@@ -1,6 +1,5 @@
 import requests
 import cloudscraper
-import subprocess
 from bs4 import BeautifulSoup
 import re
 import os
@@ -44,53 +43,40 @@ print("TO_EMAIL:", TO_EMAIL)
 
 def get_latest_notice():
 
-    headers = [
-        "-H", "User-Agent: Mozilla/5.0",
-        "-H", "Accept: text/html",
-        "-H", "Accept-Language: ko-KR,ko;q=0.9",
-        "-H", "Referer: https://www.msit.go.kr/",
-    ]
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0 Safari/537.36"
+        ),
+        "Referer": "https://www.msit.go.kr/",
+        "Accept-Language": "ko-KR,ko;q=0.9"
+    }
 
-    cmd = [
-        "curl",
-        "-L",
-        "-A", "Mozilla/5.0",
-        "--http1.1",
-        "--compressed",
-        LIST_URL
-    ]
-
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
+    res = requests.get(
+        LIST_URL,
+        headers=headers,
+        timeout=30
     )
 
-    html = result.stdout
+    print("status=", res.status_code)
+    print("html length=", len(res.text))
 
-    with open("debug.html", "w", encoding="utf-8") as f:
-        f.write(html)
+    soup = BeautifulSoup(res.text,"html.parser")
 
-    print("HTML LENGTH =", len(html))
+    links = soup.find_all("a", onclick=True)
 
-    soup = BeautifulSoup(html, "html.parser")
+    for a in links:
 
-    links = soup.select("a[href], a[onclick]")
+        onclick = a.get("onclick","")
 
-    for link in links:
+        if "fn_detail" in onclick:
 
-        onclick = link.get("onclick","")
-        href = link.get("href","")
-
-        target = onclick + href
-
-        if "nttSeqNo" in target or "fn_detail" in target:
-
-            m = re.search(r"\d{4,}", target)
+            m = re.search(r"\d+", onclick)
 
             if m:
                 notice_id = m.group()
-                title = link.get_text(strip=True)
+                title = a.get_text(strip=True)
 
                 detail_url = (
                     "https://www.msit.go.kr/bbs/view.do"
@@ -98,7 +84,7 @@ def get_latest_notice():
                     f"&nttSeqNo={notice_id}"
                 )
 
-                return notice_id, title, detail_url
+                return notice_id,title,detail_url
 
     raise Exception("공지 못찾음")
 
