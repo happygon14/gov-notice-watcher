@@ -167,6 +167,8 @@ def download_file(file_id, file_sn, ext):
     headers = {
         "User-Agent": "Mozilla/5.0",
         "Referer": LIST_URL,
+        "Origin":"https://www.msit.go.kr"
+
     }
 
     res = session.post(
