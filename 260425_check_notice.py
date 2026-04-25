@@ -289,9 +289,11 @@ def send_email(subject, html_body, attachments=None):
 
                 encoders.encode_base64(part)
 
+                filename = os.path.basename(fp)
+
                 part.add_header(
                     "Content-Disposition",
-                    f'attachment; filename="{os.path.basename(fp)}'"
+                    f'attachment; filename="{filename}"'
                 )
 
                 msg.attach(part)
