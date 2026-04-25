@@ -7,6 +7,10 @@ import smtplib
 import urllib3
 
 
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -25,6 +29,18 @@ scraper = cloudscraper.create_scraper()
 
 # ✅ requests session (첨부 다운로드용)
 session = requests.Session()
+
+retries = Retry(
+    total=5,
+    backoff_factor=2,
+    status_forcelist=[429,500,502,503,504],
+)
+
+adapter = HTTPAdapter(max_retries=retries)
+
+session.mount("https://", adapter)
+session.mount("http://", adapter)
+
 
 
 # ✅ GitHub Secrets
@@ -53,10 +69,11 @@ def get_latest_notice():
         "Accept-Language": "ko-KR,ko;q=0.9"
     }
 
-    res = requests.get(
+    res = session.get(
         LIST_URL,
         headers=headers,
-        timeout=30
+        timeout=30,
+        verify=False
     )
 
     print("status=", res.status_code)
