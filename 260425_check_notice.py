@@ -270,6 +270,12 @@ print("PWD repr len:", len(EMAIL_PASSWORD))
 
 def send_email(subject, html_body, attachments=None):
 
+    print("SMTP 객체 생성 전")
+
+    server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+
+    print("SMTP 객체 생성 후")
+
     try:
         print("SMTP 시작")
 
