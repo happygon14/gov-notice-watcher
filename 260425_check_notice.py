@@ -264,6 +264,10 @@ print("PWD length:", len(EMAIL_PASSWORD or ""))
 print("TO:", TO_EMAIL)
 print("메일 보내기 직전")
 
+print("FROM repr:", repr(EMAIL_ADDRESS))
+print("TO repr:", repr(TO_EMAIL))
+print("PWD repr len:", len(EMAIL_PASSWORD))
+
 def send_email(subject, html_body, attachments=None):
 
     try:
