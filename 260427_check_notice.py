@@ -200,107 +200,51 @@ def download_file(file_id, file_sn, ext, detail_url):
 
 
 # =========================
-# HTML 레포트생성
-# =========================
-
-def build_report_html(title, meta, content, attachments, url):
-
-    attachment_html = ""
-    if attachments:
-        for fp in attachments:
-            attachment_html += f"""
-            <li>
-            📎 <b>{os.path.basename(fp)}</b>
-            </li>
-            """
-    else:
-        attachment_html = "<li>첨부파일 없음</li>"
-
-    html = f"""
-    <html>
-    <body style="font-family:Arial; background:#f6f6f6; padding:20px;">
-
-        <div style="max-width:850px;margin:auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,0.08);">
-
-            <h2 style="border-bottom:2px solid #222;padding-bottom:10px;font-size:20px;line-height:1.4;">
-                📢 입법행정예고 등록 ({meta.get('부서','')})<br>
-                {title}
-            </h2>
-
-            <h3>📌 기본정보</h3>
-            <table style="width:100%;border-collapse:collapse;">
-                <tr><th style="text-align:left;background:#eee;padding:6px;">부서</th><td>{meta.get('부서','')}</td></tr>
-                <tr><th style="text-align:left;background:#eee;padding:6px;">담당자</th><td>{meta.get('담당자','')}</td></tr>
-                <tr><th style="text-align:left;background:#eee;padding:6px;">연락처</th><td>{meta.get('연락처','')}</td></tr>
-                <tr><th style="text-align:left;background:#eee;padding:6px;">작성일</th><td>{meta.get('작성일','')}</td></tr>
-            </table>
-
-            <h3>📄 주요내용 요약</h3>
-            <div style="white-space:pre-wrap;background:#fafafa;padding:15px;border:1px solid #ddd;line-height:1.6;">
-                {content[:2000]}
-            </div>
-
-            <h3>📎 첨부파일</h3>
-            <ul>
-                {attachment_html}
-            </ul>
-
-            <h3>🔗 원문 링크</h3>
-            <a href="{url}">{url}</a>
-
-        </div>
-
-    </body>
-    </html>
-    """
-
-    return html
-    
-# =========================
 # 메일 보내기 (첨부 포함)
 # =========================
-print("EMAIL:", EMAIL_ADDRESS)
-print("PWD length:", len(EMAIL_PASSWORD or ""))
-print("TO:", TO_EMAIL)
-print("메일 보내기 직전")
 
-print("🔥 send_email 호출 직전")
-send_email(subject, html, filepaths)
-print("🔥 send_email 호출 직후")
+def send_email(title, filepath):
 
-print("FROM repr:", repr(EMAIL_ADDRESS))
-print("TO repr:", repr(TO_EMAIL))
-print("PWD repr len:", len(EMAIL_PASSWORD))
+    msg = MIMEMultipart()
 
-def send_email(subject, html_body, attachments=None):
-
-    print("SMTP 객체 생성 전")
-
-    msg = MIMEMultipart("alternative")
-
-    msg["Subject"] = subject
+    msg["Subject"] = "📢 새 공지 발견!"
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
 
-    msg.attach(MIMEText("fallback", "plain", "utf-8"))
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
+    body = f"새 공지: {title}"
 
-    print("SMTP 연결 시작")
+    msg.attach(MIMEText(body,"plain"))
 
-    # 🔥 여기만 교체
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+    if filepath:
 
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
+        if isinstance(filepath, str):
+            filepath = [filepath]
 
-        print("로그인")
-        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        for fp in filepath:
+            with open(fp,"rb") as f:
+                part = MIMEBase("application","octet-stream")
+                part.set_payload(f.read())
 
-        print("메일 전송")
+            encoders.encode_base64(part)
+
+            part.add_header(
+                "Content-Disposition",
+                f'attachment; filename="{os.path.basename(fp)}"'
+            )
+
+            msg.attach(part)
+
+    with smtplib.SMTP_SSL(
+        "smtp.gmail.com",
+        465
+    ) as server:
+
+        server.login(
+            EMAIL_ADDRESS,
+            EMAIL_PASSWORD
+        )
+
         server.send_message(msg)
-
-    print("메일 완료")
 
 # =========================
 # 메인
@@ -310,10 +254,14 @@ def main():
 
     latest_id, title, link = get_latest_notice()
 
-    old_id = None
     if os.path.exists("last_id.txt"):
+
         with open("last_id.txt", "r") as f:
             old_id = f.read().strip()
+
+    else:
+        old_id = None
+
 
     if latest_id != old_id:
 
@@ -321,27 +269,43 @@ def main():
 
         attachments = get_attachment_info(link)
 
-        filepaths = []
-
         if attachments:
+
+            filepaths = []
 
             for file_id, file_sn, ext in attachments:
 
-                filepath = download_file(file_id, file_sn, ext, link)
+                filepath = download_file(
+                    file_id,
+                    file_sn,
+                    ext,
+                    link
+                )
+
                 filepaths.append(filepath)
 
-        # ----------------------------
-        # 본문/메타 추출 (추가 필요)
-        # ----------------------------
+
+
+
+         # =========================
+        # 본문 상세 파싱
+        # =========================
+
         res = session.get(link, verify=False)
         soup = BeautifulSoup(res.text, "html.parser")
 
+
+        # 1. 메타정보
         meta = {}
+
         for dl in soup.select(".meta dl.tit_con"):
             k = dl.select_one("dt").get_text(strip=True)
             v = dl.select_one("dd").get_text(strip=True)
+
             meta[k] = v
 
+
+        # 2. 본문텍스트
         content_tag = soup.select_one("#cont-wrap")
 
         for tag in content_tag.select("script, style"):
@@ -349,16 +313,79 @@ def main():
 
         content = content_tag.get_text("\n", strip=True)
 
-        # ----------------------------
-        # 레포트 생성
-        # ----------------------------
-        html = build_report_html(title, meta, content, filepaths, link)
- 
-        subject = f"📢입법행정예고 등록({meta.get('부서','')}) | {title}"
-        send_email(subject, html, filepaths)
+
+        # 3. 의견제출기한
+        deadline_match = re.search(
+            r'(\d{4}년\s*\d+월\s*\d+일)까지',
+            content
+        )
+
+        deadline = (
+            deadline_match.group(1)
+            if deadline_match
+            else "미추출"
+        )
+
+
+        # 4. 개정이유
+        reason_match = re.search(
+            r'1\.\s*개정이유(.*?)2\.\s*주요내용',
+            content,
+            re.S
+        )
+
+        reason = (
+            reason_match.group(1).strip()
+            if reason_match else ""
+        )
+
+
+        # 5. 주요내용
+        main_match = re.search(
+            r'2\.\s*주요내용(.*?)3\.\s*의견제출',
+            content,
+            re.S
+        )
+
+        main_points = (
+            main_match.group(1).strip()
+            if main_match else ""
+        )
+
+
+        # =========================
+        # 로그 테스트
+        # =========================
+
+        print("공고명:", title)
+        print("작성일:", meta.get("작성일"))
+        print("소관부서:", meta.get("부서"))
+        print("담당자:", meta.get("담당자"))
+        print("연락처:", meta.get("연락처"))
+        print("의견제출기한:", deadline)
+
+        print("개정이유:")
+        print(reason[:500])
+
+        print("주요내용:")
+        print(main_points[:1000])
+
+            
+
+            send_email(title, filepaths)
+
+        else:
+
+            send_email(title, None)
+
 
         with open("last_id.txt", "w") as f:
             f.write(latest_id)
 
     else:
+
         print("변경 없음")
+
+
+if __name__ == "__main__":
+    main()
