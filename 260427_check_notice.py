@@ -211,9 +211,24 @@ def send_email(title, filepath):
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
 
-    body = f"새 공지: {title}"
+    body = f"""
 
-    msg.attach(MIMEText(body,"plain"))
+    공고명: {title}
+
+    작성일: {meta.get("작성일")}
+    부서: {meta.get("부서")}
+    담당자: {meta.get("담당자")}
+    연락처: {meta.get("연락처")}
+    의견제출기한: {deadline}
+
+    [개정이유]
+    {reason[:500]}
+
+    [주요내용]
+    {main_points[:1000]}
+    """
+
+    msg.attach(MIMEText(body,"plain","utf-8"))
 
     if filepath:
 
@@ -304,6 +319,11 @@ def main():
 
                 meta[k] = v
 
+            title_tag = soup.select_one(".board_view_tit")
+
+            if title_tag and not title:
+                title = title_tag.get_text(strip=True)
+
 
         # 2. 본문텍스트
             content_tag = soup.select_one("#cont-wrap")
@@ -316,8 +336,9 @@ def main():
 
         # 3. 의견제출기한
             deadline_match = re.search(
-                r'(\d{4}년\s*\d+월\s*\d+일)까지',
-                content
+                r'(\d{4}\s*년\s*\d+\s*월\s*\d+\s*일)\s*까지',
+                content,
+                re.S
             )
 
             deadline = (
