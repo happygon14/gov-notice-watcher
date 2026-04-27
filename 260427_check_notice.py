@@ -203,7 +203,7 @@ def download_file(file_id, file_sn, ext, detail_url):
 # 메일 보내기 (첨부 포함)
 # =========================
 
-def send_email(title, filepath, meta, reason, main_points):
+def send_email(title, filepath, meta, deadline, reason, main_points):
     
     msg = MIMEMultipart()
 
@@ -319,7 +319,7 @@ def main():
 
                 meta[k] = v
 
-            title_tag = soup.select_one("h3")
+            title_tag = soup.select_one(".board_view_tit")
 
             if title_tag and not title:
                 title = title_tag.get_text(strip=True)
@@ -346,6 +346,8 @@ def main():
                 if deadline_match
                 else "미추출"
             )
+
+            deadline = re.sub(r"\s+", "", deadline)
 
 
         # 4. 개정이유
@@ -391,11 +393,11 @@ def main():
             print("주요내용:")
             print(main_points[:1000])
 
-            send_email(title, filepaths, meta, reason, main_points)
+            send_email(title, filepaths, meta, deadline, reason, main_points)
 
         else:
 
-            send_email(title, None, meta, reason, main_points)
+            send_email(title, None, meta, deadline, reason, main_points)
 
 
 
