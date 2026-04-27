@@ -387,7 +387,7 @@ def main():
             # 줄바꿈은 살리고 과한 공백만 정리
             main_points = re.sub(r'[ \t]+', ' ', main_points).strip()
             # 항목 시작 줄바꿈 보강
-            main_points = re.sub(r'\s*([가-하]\.)', r'\n\n\1', main_points)
+            main_points = re.sub(r'\s*([가-하])\s*\.', r'\n\n\1.', main_points)
             
             # 인용문 앞 줄바꿈
             main_points = re.sub(r'\s*(“)', r'\n\1', main_points)
