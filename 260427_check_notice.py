@@ -291,84 +291,84 @@ def main():
         # 본문 상세 파싱
         # =========================
 
-        res = session.get(link, verify=False)
-        soup = BeautifulSoup(res.text, "html.parser")
+            res = session.get(link, verify=False)
+            soup = BeautifulSoup(res.text, "html.parser")
 
 
         # 1. 메타정보
-        meta = {}
+            meta = {}
 
-        for dl in soup.select(".meta dl.tit_con"):
-            k = dl.select_one("dt").get_text(strip=True)
-            v = dl.select_one("dd").get_text(strip=True)
+            for dl in soup.select(".meta dl.tit_con"):
+                k = dl.select_one("dt").get_text(strip=True)
+                v = dl.select_one("dd").get_text(strip=True)
 
-            meta[k] = v
+                meta[k] = v
 
 
         # 2. 본문텍스트
-        content_tag = soup.select_one("#cont-wrap")
+            content_tag = soup.select_one("#cont-wrap")
 
-        for tag in content_tag.select("script, style"):
-            tag.decompose()
+            for tag in content_tag.select("script, style"):
+                tag.decompose()
 
-        content = content_tag.get_text("\n", strip=True)
+            content = content_tag.get_text("\n", strip=True)
 
 
         # 3. 의견제출기한
-        deadline_match = re.search(
-            r'(\d{4}년\s*\d+월\s*\d+일)까지',
-            content
-        )
+            deadline_match = re.search(
+                r'(\d{4}년\s*\d+월\s*\d+일)까지',
+                content
+            )
 
-        deadline = (
-            deadline_match.group(1)
-            if deadline_match
-            else "미추출"
-        )
+            deadline = (
+                deadline_match.group(1)
+                if deadline_match
+                else "미추출"
+            )
 
 
         # 4. 개정이유
-        reason_match = re.search(
-            r'1\.\s*개정이유(.*?)2\.\s*주요내용',
-            content,
-            re.S
-        )
+            reason_match = re.search(
+                r'1\.\s*개정이유(.*?)2\.\s*주요내용',
+                content,
+                re.S
+            )        
 
-        reason = (
-            reason_match.group(1).strip()
-            if reason_match else ""
-        )
+            reason = (
+                reason_match.group(1).strip()
+                if reason_match else ""
+            )
 
 
         # 5. 주요내용
-        main_match = re.search(
-            r'2\.\s*주요내용(.*?)3\.\s*의견제출',
-            content,
-            re.S
-        )
+            main_match = re.search(
+                r'2\.\s*주요내용(.*?)3\.\s*의견제출',
+                content,
+                re.S
+            )
 
-        main_points = (
-            main_match.group(1).strip()
-            if main_match else ""
-        )
+            main_points = (
+                main_match.group(1).strip()
+                if main_match else ""
+            )
 
 
         # =========================
         # 로그 테스트
         # =========================
 
-        print("공고명:", title)
-        print("작성일:", meta.get("작성일"))
-        print("소관부서:", meta.get("부서"))
-        print("담당자:", meta.get("담당자"))
-        print("연락처:", meta.get("연락처"))
-        print("의견제출기한:", deadline)
+            print("공고명:", title)
+            print("작성일:", meta.get("작성일"))
+            print("소관부서:", meta.get("부서"))
+            print("담당자:", meta.get("담당자"))
+            print("연락처:", meta.get("연락처"))
+            print("의견제출기한:", deadline)
 
-        print("개정이유:")
-        print(reason[:500])
+            print("개정이유:")
+            print(reason[:500])
 
-        print("주요내용:")
-        print(main_points[:1000])
+            print("주요내용:")
+            print(main_points[:1000])
 
             
 
