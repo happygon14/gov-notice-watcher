@@ -203,7 +203,7 @@ def download_file(file_id, file_sn, ext, detail_url):
 # 메일 보내기 (첨부 포함)
 # =========================
 
-def send_email(title, filepath, meta, deadline, reason, main_points):
+def send_email(title, filepath, meta, deadline, reason, main_points, link):
     
     msg = MIMEMultipart()
 
@@ -226,6 +226,9 @@ def send_email(title, filepath, meta, deadline, reason, main_points):
 
     [주요내용]
     {main_points[:1000]}
+
+    📎 원문 확인:
+    {link}
     """
 
     msg.attach(MIMEText(body,"plain","utf-8"))
@@ -412,11 +415,11 @@ def main():
             print("주요내용:")
             print(main_points[:1000])
 
-            send_email(title, filepaths, meta, deadline, reason, main_points)
+            send_email(title, filepaths, meta, deadline, reason, main_points, link)
 
         else:
 
-            send_email(title, None, meta, deadline, reason, main_points)
+            send_email(title, None, meta, deadline, reason, main_points, link)
 
 
 
