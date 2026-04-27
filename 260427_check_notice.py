@@ -383,7 +383,13 @@ def main():
                         
             # ===== 텍스트 정제 추가 =====
             reason = re.sub(r"\s+", " ", reason).strip()
-            main_points = re.sub(r"\s+", " ", main_points).strip()
+            # 줄바꿈은 살리고 과한 공백만 정리
+            main_points = re.sub(r'[ \t]+', ' ', main_points).strip()
+            # 항목 시작 줄바꿈 보강
+            main_points = re.sub(r'\s*([가-하]\.)', r'\n\n\1', main_points)
+            
+            # 인용문 앞 줄바꿈
+            main_points = re.sub(r'\s*(“)', r'\n\1', main_points)
             
             # 가. 나. 다. 줄바꿈 복원
             main_points = re.sub(r'([가-하])\.', r'\n\1.', main_points)
