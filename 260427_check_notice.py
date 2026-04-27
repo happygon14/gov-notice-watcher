@@ -335,7 +335,8 @@ def main():
             for tag in content_tag.select("script, style"):
                 tag.decompose()
 
-            content = content_tag.get_text("\n", strip=True)
+            content = content_tag.get_text(" ", strip=True)
+            content = re.sub(r"\s+", " ", content)
 
 
         # 3. 의견제출기한
