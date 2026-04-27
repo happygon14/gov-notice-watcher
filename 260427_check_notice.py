@@ -203,7 +203,7 @@ def download_file(file_id, file_sn, ext, detail_url):
 # 메일 보내기 (첨부 포함)
 # =========================
 
-def send_email(title, filepath, meta, reason_text, main_points):
+def send_email(title, filepath, meta, reason, main_points):
     
     msg = MIMEMultipart()
 
@@ -319,7 +319,7 @@ def main():
 
                 meta[k] = v
 
-            title_tag = soup.select_one(".board_view_tit")
+            title_tag = soup.select_one("h3")
 
             if title_tag and not title:
                 title = title_tag.get_text(strip=True)
@@ -391,13 +391,12 @@ def main():
             print("주요내용:")
             print(main_points[:1000])
 
-            
-
-            send_email(title, filepaths, meta, reason_text, main_points)
+            send_email(title, filepaths, meta, reason, main_points)
 
         else:
 
-            send_email(title, None)
+            send_email(title, None, meta, reason, main_points)
+
 
 
         with open("last_id.txt", "w") as f:
