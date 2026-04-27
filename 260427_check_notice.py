@@ -203,8 +203,8 @@ def download_file(file_id, file_sn, ext, detail_url):
 # 메일 보내기 (첨부 포함)
 # =========================
 
-def send_email(title, filepath):
-
+def send_email(title, filepath, meta, reason_text, main_points):
+    
     msg = MIMEMultipart()
 
     msg["Subject"] = "📢 새 공지 발견!"
@@ -393,7 +393,7 @@ def main():
 
             
 
-            send_email(title, filepaths)
+            send_email(title, filepaths, meta, reason_text, main_points)
 
         else:
 
