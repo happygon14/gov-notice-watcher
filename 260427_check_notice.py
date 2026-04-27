@@ -319,10 +319,14 @@ def main():
 
                 meta[k] = v
 
-            title_tag = soup.select_one(".board_view_tit")
+            title_tag = (
+                soup.select_one(".board_view_tit")
+                or soup.select_one("h3")
+                or soup.select_one(".view_tit")
+            )
 
-            if title_tag and not title:
-                title = title_tag.get_text(strip=True)
+            if title_tag:
+                title = title_tag.get_text(" ", strip=True)    
 
 
         # 2. 본문텍스트
@@ -347,7 +351,7 @@ def main():
                 else "미추출"
             )
 
-            deadline = re.sub(r"\s+", "", deadline)
+            deadline = re.sub(r"\s+", " ", deadline).strip()
 
 
         # 4. 개정이유
@@ -375,6 +379,14 @@ def main():
                 if main_match else ""
             )
 
+
+                        
+            # ===== 텍스트 정제 추가 =====
+            reason = re.sub(r"\s+", " ", reason).strip()
+            main_points = re.sub(r"\s+", " ", main_points).strip()
+            
+            # 가. 나. 다. 줄바꿈 복원
+            main_points = re.sub(r'([가-하])\.', r'\n\1.', main_points)
 
         # =========================
         # 로그 테스트
