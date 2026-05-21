@@ -1,57 +1,52 @@
-import requests
-import cloudscraper
-from bs4 import BeautifulSoup
-import re
-import os
-import smtplib
-import urllib3
+# 1. 라이브러리(도구)
 
+  # 1) 기본 내장 라이브러리
+import os                          # 운영체제(OS)기능 접근용 (파일존재확인, 환경변수읽기, 파일명처리 등)
+import smtplib                     # 이메일 전송 (SMTP서버로 메일보내기)
+import re                          # 문자패턴찾기 (게시글 제목 분석시)
 
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+  # 2) 웹 크롤링 계열
+import requests                     # 웹사이트 접속(GET/POST)
+from bs4 import BeautifulSoup       # HTML 분석
+import cloudscraper                 # request강화버전 (차단 우회용) (일반 requests 막히는 경우)
 
+  # 3) 접속 안정화
+import urllib3                            # SSL경고 숨김
+urllib3.disable_warnings()                # SSL경고메시지 숨김
+from urllib3.util.retry import Retry      # 실패시 자동 재시도 (서버 일시오류 대응)
+from requests.adapters import HTTPAdapter # requests 세션에 재시도 기능 연결
 
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
+  # 4) 이메일 MIME계열
+from email.mime.text import MIMEText            # 메일본문만들기
+from email.mime.multipart import MIMEMultipart  # 본문+이미지+첨부파일 합체 
+from email.mime.base import MIMEBase            # 엑셀/이미지 첨부
+from email import encoders                      # 첨부파일 메일용 변환
 
-urllib3.disable_warnings()
+# 2. 환경변수
+  # 1) 사이트 주소
+LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"    # 과기부 행정예고 목록페이지
 
-
-
-# ✅ MSIT 공고 목록 페이지
-LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"
+  # 2) 이메일 환경변수
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+TO_EMAIL = os.environ.get("TO_EMAIL")
 
 
 # ✅ scraper 생성 (cloudscraper)
 scraper = cloudscraper.create_scraper()
-
-
 # ✅ requests session (첨부 다운로드용)
 session = requests.Session()
-
 retries = Retry(
     total=5,
     backoff_factor=2,
     status_forcelist=[429,500,502,503,504],
 )
-
 adapter = HTTPAdapter(max_retries=retries)
 
 session.mount("https://", adapter)
 session.mount("http://", adapter)
 
-
-
 # ✅ GitHub Secrets
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
-TO_EMAIL = os.environ.get("TO_EMAIL")
-
-print("EMAIL_ADDRESS:", EMAIL_ADDRESS)
-print("EMAIL_PASSWORD:", EMAIL_PASSWORD)
-print("TO_EMAIL:", TO_EMAIL)
 
 
 # =========================
