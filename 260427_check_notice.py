@@ -1,4 +1,5 @@
-# 1. 라이브러리(도구)
+# [준비] (import / 환경변수 / session생성)
+# 1-1. 라이브러리(도구)
 
   # 1) 기본 내장 라이브러리
 import os                          # 운영체제(OS)기능 접근용 (파일존재확인, 환경변수읽기, 파일명처리 등)
@@ -22,36 +23,33 @@ from email.mime.multipart import MIMEMultipart  # 본문+이미지+첨부파일 
 from email.mime.base import MIMEBase            # 엑셀/이미지 첨부
 from email import encoders                      # 첨부파일 메일용 변환
 
-# 2. 환경변수
-  # 1) 사이트 주소
+# 1-2. 환경변수 
+  # 1) 사이트 주소 (크롤링 대상 웹사이트)
 LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"    # 과기부 행정예고 목록페이지
 
-  # 2) 이메일 환경변수
+  # 2) 이메일 환경변수 (Github Secret에 저장한 내용 불러오기)
 EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 TO_EMAIL = os.environ.get("TO_EMAIL")
 
-
-# ✅ scraper 생성 (cloudscraper)
-scraper = cloudscraper.create_scraper()
-# ✅ requests session (첨부 다운로드용)
-session = requests.Session()
-retries = Retry(
-    total=5,
-    backoff_factor=2,
-    status_forcelist=[429,500,502,503,504],
+  # 3) 웹사이트 접속용 브라우저(자동접속(봇) 차단 우회기능 강화버전_requests의 강화버전) & 안정적기능(retry등)
+scraper = cloudscraper.create_scraper()        # create_scraper : 브라우저 하나 생성
+session = requests.Session()                   # 연결유지하는 requests 객체생성(매번 새접속없이 연결 재사용)
+retries = Retry(                               # 접속실패시 자동재시도
+    total=5,                                        # 최대 5번
+    backoff_factor=2,                               # 실패할수록 대기시간 2배씩 증가
+    status_forcelist=[429,500,502,503,504],         # 이 오류코드 나오면 재시도 (429:너무많이 접속, 500:서버오류, 503:서버점검 등)
 )
-adapter = HTTPAdapter(max_retries=retries)
+adapter = HTTPAdapter(max_retries=retries)     # requests에 retry 기능 장착
 
-session.mount("https://", adapter)
+session.mount("https://", adapter)             # 모든 웹접속시 retry기능 적용
 session.mount("http://", adapter)
 
-# ✅ GitHub Secrets
 
 
-# =========================
-# 최신 공지 가져오기
-# =========================
+# [기능 정의(def)]  1.공지찾기, 2.첨부찾기, 3.다운로드, 4.메일발송
+
+# 2-1. 최신 공지찾기
 
 def get_latest_notice():
 
