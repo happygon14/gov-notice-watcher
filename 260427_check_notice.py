@@ -106,10 +106,11 @@ def get_latest_notice():
 
 
 # 2-2. 첨부파일 찾기
+# 흐름 : 상세페이지접속  →  HTML분석  →  첨부파일 링크 찾기  →  다운로드용 파일번호 추출  →  리스트로 반환
 
-def get_attachment_info(detail_url):
+def get_attachment_info(detail_url):                      # 상세페이지(detail_url)에서 첨부파일정보 추출하는 기능 정의
 
-    res = session.get(
+    res = session.get(                                    # 상세페이지 HTML 다운로드
         detail_url,
         headers={
             "User-Agent":"Mozilla/5.0",
@@ -120,14 +121,13 @@ def get_attachment_info(detail_url):
         verify=False
     )
 
-    soup = BeautifulSoup(res.text, "html.parser")
-    print(res.text[:5000])
+    soup = BeautifulSoup(res.text, "html.parser")         # HTML 분석 객체 생성 (웹페이지 분해)
 
-    links = soup.select("a[href], a[onclick]")
+    links = soup.select("a[href], a[onclick]")            # href(일반링크) 또는 onclick(자바스크립트링크)가진 a태그 전부 찾기
 
-    attachments = []
+    attachments = []                                      # 첨부파일정보 저장용 빈 리스트
 
-    for a in links:
+    for a in links:                                       # 링크 하나씩검사
 
         target = (
             a.get("onclick","")
@@ -135,9 +135,7 @@ def get_attachment_info(detail_url):
             + a.get("href","")
         )
 
-        if "fn_download" in target or "fileDown" in target:
-
-            print("첨부링크 발견:", target)
+        if "fn_download" in target or "fileDown" in target:    # 다운로드 링크인지 판별
 
             m = re.findall(r"'(.*?)'", target)
 
