@@ -52,7 +52,6 @@ session.mount("http://", adapter)
 # 2-1. 최신 공지찾기
 
 def get_latest_notice():
-
     headers = {                                                # 브라우저 설정
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -70,8 +69,7 @@ def get_latest_notice():
         verify=False
     )
 
-    print("status=", res.status_code)
-    print("html length=", len(res.text))
+    print("status=", res.status_code)                           # 접속성공여부 확인용, 오류코드 등도 확인가능
 
     soup = BeautifulSoup(res.text,"html.parser")                # HTML 분석 객체 생성 (웹페이지 분해)
 
@@ -86,10 +84,10 @@ def get_latest_notice():
             m = re.search(r"\d{5,}", onclick)                   # 숫자 5자리 이상 찾기(공지번호 추출용)
 
             if m:
-                notice_id = m.group()                           # 
-                title = a.get_text(strip=True)
+                notice_id = m.group()                           # 최상단(최신) 게시글번호 추출
+                title = a.get_text(strip=True)                  # 제목 추출
 
-                detail_url = (
+                detail_url = (                                  # url 추출
                         "https://msit.go.kr/bbs/view.do"
                         "?sCode=user"
                         "&mId=109"
@@ -100,17 +98,14 @@ def get_latest_notice():
                         "&searchOpt=ALL"
                         "&searchTxt="
                 )
-
-                print(detail_url)
                 
-                return notice_id,title,detail_url
+                return notice_id,title,detail_url                 # 게시글번호, 제목, url 반환
 
     
     raise Exception("공지 못찾음")
 
-# =========================
-# 첨부파일 정보 찾기
-# =========================
+
+# 2-2. 첨부파일 찾기
 
 def get_attachment_info(detail_url):
 
