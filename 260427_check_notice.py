@@ -53,17 +53,17 @@ session.mount("http://", adapter)
 
 def get_latest_notice():
 
-    headers = {
+    headers = {                                                # 브라우저 설정
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/124.0 Safari/537.36"
         ),
-        "Referer": "https://www.msit.go.kr/",
+        "Referer": "https://www.msit.go.kr/",                  # 어디서 들어왔는지..(과기부 메인홈페이지에서 들어왔고)
         "Accept-Language": "ko-KR,ko;q=0.9"
     }
 
-    res = session.get(
+    res = session.get(                                         # 웹페이지 다운로드 요청
         LIST_URL,
         headers=headers,
         timeout=30,
@@ -73,20 +73,20 @@ def get_latest_notice():
     print("status=", res.status_code)
     print("html length=", len(res.text))
 
-    soup = BeautifulSoup(res.text,"html.parser")
+    soup = BeautifulSoup(res.text,"html.parser")                # HTML 분석 객체 생성 (웹페이지 분해)
 
-    links = soup.find_all("a", onclick=True)
+    links = soup.find_all("a", onclick=True)                    # onclick(자바스크립트방식 링크)에 있는 a태그 전부 찾기
 
-    for a in links:
+    for a in links:                                             # 링크 하나씩 검사
 
-        onclick = a.get("onclick","")
+        onclick = a.get("onclick","")                           # onclick 내용 가져오기
 
-        if "fn_detail" in onclick:
+        if "fn_detail" in onclick:                              # 상세보기 링크만 선택
 
-            m = re.search(r"\d{5,}", onclick)    
+            m = re.search(r"\d{5,}", onclick)                   # 숫자 5자리 이상 찾기(공지번호 추출용)
 
             if m:
-                notice_id = m.group()
+                notice_id = m.group()                           # 
                 title = a.get_text(strip=True)
 
                 detail_url = (
