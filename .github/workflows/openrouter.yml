@@ -1,0 +1,25 @@
+name: openrouter test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: install libs
+        run: pip install requests pandas openpyxl
+        
+      - name: run script
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python ai_api_test.py
