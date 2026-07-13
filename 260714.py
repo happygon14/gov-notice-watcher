@@ -237,11 +237,11 @@ def analyze_with_ai(document_text):
     }
 
     data = {
-        "model": "qwen/qwen3-235b-a22b:free",
+        "model": "openai/gpt-oss-120b:free",
         "messages": [
             {
                 "role": "system",
-                "content": "반드시 한국어로만 답변한다."
+                "content": "반드시 한국어만 사용한다."
             },
             {
                 "role": "user",
