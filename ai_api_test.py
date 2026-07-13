@@ -10,9 +10,21 @@ r = requests.get(
     headers=headers
 )
 
-print(r.status_code)
-
 models = r.json()["data"]
 
-for m in models[:30]:
-    print(m["id"])
+keywords = [
+    "qwen",
+    "llama",
+    "gemini",
+    "grok",
+    "gpt",
+    "claude"
+]
+
+for m in models:
+    model_id = m["id"].lower()
+
+    for k in keywords:
+        if k in model_id:
+            print(m["id"])
+            break
