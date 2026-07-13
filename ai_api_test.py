@@ -1,6 +1,13 @@
 import requests
 import os
 
+print("KEY EXISTS:", "OPENROUTER_API_KEY" in os.environ)
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+print("KEY LENGTH:", len(OPENROUTER_API_KEY) if OPENROUTER_API_KEY else 0)
+
+
 OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
 
 url = "https://openrouter.ai/api/v1/chat/completions"
