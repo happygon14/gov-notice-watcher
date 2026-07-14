@@ -37,7 +37,7 @@ jobs:                                              # 실제 작업들을 정의
           python-version: "3.11"
 
       - name: 라이브러리 설치                        # 리눅스 터미널 명령어 실행, 크롤링 라이브러리 설치단계
-        run: pip install requests beautifulsoup4 cloudscraper
+        run: pip install requests beautifulsoup4 cloudscraper lxml
 
       - name: 공지 확인 실행                                # 메인단계
         env:                                                # GitHub Secrets에 저장된 값을 환경변수로 주입
