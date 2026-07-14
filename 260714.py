@@ -304,8 +304,18 @@ def analyze_with_ai(document_text):
                 
 
         if "choices" in result:
-            return result["choices"][0]["message"]["content"]
+            content = result["choices"][0]["message"]["content"]
 
+            print("=" * 60)
+            print("AI 분석 결과")
+            print("=" * 60)
+            print(content[:3000])
+        
+            return content
+
+
+
+      
         return str(result)
 
     except Exception as e:
@@ -471,28 +481,21 @@ def main():
         old_id = None
 
 
-    if latest_id != old_id:
-
-        print("새 공지 발견")
-
-        attachments = get_attachment_info(link)
-
-        if attachments:
-
-            filepaths = []
-
-            for file_id, file_sn, ext in attachments:
-
-                filepath = download_file(
-                    file_id,
-                    file_sn,
-                    ext,
-                    link
-                )
-
-                filepaths.append(filepath)
-      
-
+    attachments = get_attachment_info(link)
+    
+    filepaths = []
+    
+    for file_id, file_sn, ext in attachments:
+    
+        filepath = download_file(
+            file_id,
+            file_sn,
+            ext,
+            link
+        )
+    
+        filepaths.append(filepath)
+    
     ai_result = ""
 
     for fp in filepaths:
@@ -521,8 +524,8 @@ def main():
         # 본문 상세 파싱
         # =========================
 
-            res = safe_get(link, verify=False)
-            soup = BeautifulSoup(res.text, "html.parser")
+    res = safe_get(link, verify=False)
+    soup = BeautifulSoup(res.text, "html.parser")
 
 
         # 1. 메타정보
