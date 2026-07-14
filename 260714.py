@@ -187,9 +187,6 @@ def download_file(file_id, file_sn, ext, detail_url):
 
 
 
-
-
-
 # AI분석함수
 
 
@@ -254,6 +251,8 @@ def analyze_with_ai(document_text):
 
     try:
 
+        print("OPENROUTER 요청 시작")
+
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
@@ -261,7 +260,16 @@ def analyze_with_ai(document_text):
             timeout=120
         )
 
+        print("OPENROUTER 응답 수신")
+        print("STATUS:", response.status_code)
+        print(response.text[:500])
+      
         result = response.json()
+
+
+        print("JSON 파싱 완료")
+        print(result.keys())
+                
 
         if "choices" in result:
             return result["choices"][0]["message"]["content"]
@@ -313,7 +321,6 @@ def extract_hwpx_text(filepath):
         print("HWPX 추출 실패:", e)
 
         return ""
-
 
 
 # =========================
