@@ -44,6 +44,7 @@ jobs:                                              # 실제 작업들을 정의
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python 260714.py                         # 파이썬파일 실행
 
       - name: 변경사항 커밋
