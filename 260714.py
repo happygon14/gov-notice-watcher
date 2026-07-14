@@ -373,7 +373,7 @@ def send_email(title, filepath, meta, deadline, reason, main_points, link, ai_re
     
     msg = MIMEMultipart()
 
-    msg["Subject"] = "📢 새 공지 발견!"
+    msg["Subject"] = f"📢 신규 입법행정예고 공고 - {title}"
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
 
@@ -531,15 +531,6 @@ def main():
             v = dl.select_one("dd").get_text(strip=True)
 
             meta[k] = v
-
-        title_tag = (
-            soup.select_one(".board_view_tit")
-            or soup.select_one("h3")
-            or soup.select_one(".view_tit")
-        )
-
-        if title_tag:
-            title = title_tag.get_text(" ", strip=True)    
 
 
         # 2. 본문텍스트
