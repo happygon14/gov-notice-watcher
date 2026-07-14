@@ -32,6 +32,8 @@ LIST_URL = "https://www.msit.go.kr/bbs/list.do?sCode=user&mPid=103&mId=109"    #
 EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 TO_EMAIL = os.environ.get("TO_EMAIL")
+OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
 
   # 3) 웹사이트 접속용 브라우저(자동접속(봇) 차단 우회기능 강화버전_requests의 강화버전) & 안정적기능(retry등)
 scraper = cloudscraper.create_scraper()        # create_scraper : 브라우저 하나 생성
