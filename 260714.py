@@ -481,160 +481,151 @@ def main():
         old_id = None
 
 
-    attachments = get_attachment_info(link)
-    
-    filepaths = []
-    
-    for file_id, file_sn, ext in attachments:
-    
-        filepath = download_file(
-            file_id,
-            file_sn,
-            ext,
-            link
-        )
-    
-        filepaths.append(filepath)
-    
-    ai_result = ""
+    if latest_id != old_id:
 
-    for fp in filepaths:
+        print("새 공지 발견")
     
-        if fp.lower().endswith(".hwpx"):
+        attachments = get_attachment_info(link)
     
-            print("AI 분석 시작")
+        filepaths = []
     
-            document_text = extract_hwpx_text(fp)
+        for file_id, file_sn, ext in attachments:
     
-            print(
-                "문서길이:",
-                len(document_text)
+            filepath = download_file(
+                file_id,
+                file_sn,
+                ext,
+                link
             )
     
-            if document_text:
+            filepaths.append(filepath)
     
-                ai_result = analyze_with_ai(
-                    document_text[:30000]
-                )
+        ai_result = ""
     
-            break
-
-
-         # =========================
+        for fp in filepaths:
+    
+            if fp.lower().endswith(".hwpx"):
+    
+                print("AI 분석 시작")
+    
+                document_text = extract_hwpx_text(fp)
+    
+                print("문서길이:", len(document_text))
+    
+                if document_text:
+    
+                    ai_result = analyze_with_ai(
+                        document_text[:30000]
+                    )
+    
+                break
+    
         # 본문 상세 파싱
-        # =========================
+        res = safe_get(link, verify=False)
+        soup = BeautifulSoup(res.text, "html.parser")
+    
+        meta = {}
 
-    res = safe_get(link, verify=False)
-    soup = BeautifulSoup(res.text, "html.parser")
+        for dl in soup.select(".meta dl.tit_con"):
+            k = dl.select_one("dt").get_text(strip=True)
+            v = dl.select_one("dd").get_text(strip=True)
 
+            meta[k] = v
 
-        # 1. 메타정보
-            meta = {}
+        title_tag = (
+            soup.select_one(".board_view_tit")
+            or soup.select_one("h3")
+            or soup.select_one(".view_tit")
+        )
 
-            for dl in soup.select(".meta dl.tit_con"):
-                k = dl.select_one("dt").get_text(strip=True)
-                v = dl.select_one("dd").get_text(strip=True)
-
-                meta[k] = v
-
-            title_tag = (
-                soup.select_one(".board_view_tit")
-                or soup.select_one("h3")
-                or soup.select_one(".view_tit")
-            )
-
-            if title_tag:
-                title = title_tag.get_text(" ", strip=True)    
+        if title_tag:
+            title = title_tag.get_text(" ", strip=True)    
 
 
         # 2. 본문텍스트
-            content_tag = soup.select_one("#cont-wrap")
+        content_tag = soup.select_one("#cont-wrap")
 
-            for tag in content_tag.select("script, style"):
-                tag.decompose()
+        for tag in content_tag.select("script, style"):
+            tag.decompose()
 
-            content = content_tag.get_text(" ", strip=True)
-            content = re.sub(r"\s+", " ", content)
+        content = content_tag.get_text(" ", strip=True)
+        content = re.sub(r"\s+", " ", content)
 
 
         # 3. 의견제출기한
-            deadline_match = re.search(
-                r'(\d{4}\s*년\s*\d+\s*월\s*\d+\s*일)\s*까지',
-                content,
-                re.S
-            )
+        deadline_match = re.search(
+            r'(\d{4}\s*년\s*\d+\s*월\s*\d+\s*일)\s*까지',
+            content,
+            re.S
+        )
 
-            deadline = (
-                deadline_match.group(1)
-                if deadline_match
-                else "미추출"
-            )
+        deadline = (
+            deadline_match.group(1)
+            if deadline_match
+            else "미추출"
+        )
 
-            deadline = re.sub(r"\s+", " ", deadline).strip()
+        deadline = re.sub(r"\s+", " ", deadline).strip()
 
 
         # 4. 개정이유
-            reason_match = re.search(
-                r'1\.\s*개정이유(.*?)2\.\s*주요내용',
-                content,
-                re.S
-            )        
+        reason_match = re.search(
+            r'1\.\s*개정이유(.*?)2\.\s*주요내용',
+            content,
+            re.S
+        )        
 
-            reason = (
-                reason_match.group(1).strip()
-                if reason_match else ""
-            )
+        reason = (
+            reason_match.group(1).strip()
+            if reason_match else ""
+        )
 
 
         # 5. 주요내용
-            main_match = re.search(
-                r'2\.\s*주요내용(.*?)3\.\s*의견제출',
-                content,
-                re.S
-            )
+        main_match = re.search(
+            r'2\.\s*주요내용(.*?)3\.\s*의견제출',
+            content,
+            re.S
+        )
 
-            main_points = (
-                main_match.group(1).strip()
-                if main_match else ""
-            )
+        main_points = (
+            main_match.group(1).strip()
+            if main_match else ""
+        )
 
- 
-                        
-            # ===== 텍스트 정제 추가 =====
-            reason = re.sub(r"\s+", " ", reason).strip()
-            # 줄바꿈은 살리고 과한 공백만 정리
-            main_points = re.sub(r'[ \t]+', ' ', main_points).strip()
-            # 항목 시작 줄바꿈 보강
-            main_points = re.sub(r'\s*([가-하])\s*\.', r'\n\n\1.', main_points)
-            
-            # 인용문 앞 줄바꿈
-            main_points = re.sub(r'\s*(“)', r'\n\1', main_points)
-            
-            # 가. 나. 다. 줄바꿈 복원
-            main_points = re.sub(r'([가-하])\.', r'\n\1.', main_points)
+
+                    
+        # ===== 텍스트 정제 추가 =====
+        reason = re.sub(r"\s+", " ", reason).strip()
+        # 줄바꿈은 살리고 과한 공백만 정리
+        main_points = re.sub(r'[ \t]+', ' ', main_points).strip()
+        # 항목 시작 줄바꿈 보강
+        main_points = re.sub(r'\s*([가-하])\s*\.', r'\n\n\1.', main_points)
+        
+        # 인용문 앞 줄바꿈
+        main_points = re.sub(r'\s*(“)', r'\n\1', main_points)
+        
+        # 가. 나. 다. 줄바꿈 복원
+        main_points = re.sub(r'([가-하])\.', r'\n\1.', main_points)
 
         # =========================
         # 로그 테스트
         # =========================
 
-            print("공고명:", title)
-            print("작성일:", meta.get("작성일"))
-            print("소관부서:", meta.get("부서"))
-            print("담당자:", meta.get("담당자"))
-            print("연락처:", meta.get("연락처"))
-            print("의견제출기한:", deadline)
+        print("공고명:", title)
+        print("작성일:", meta.get("작성일"))
+        print("소관부서:", meta.get("부서"))
+        print("담당자:", meta.get("담당자"))
+        print("연락처:", meta.get("연락처"))
+        print("의견제출기한:", deadline)
 
-            print("개정이유:")
-            print(reason[:500])
+        print("개정이유:")
+        print(reason[:500])
 
-            print("주요내용:")
-            print(main_points[:1000])
+        print("주요내용:")
+        print(main_points[:1000])
 
-            send_email(title, filepaths, meta, deadline, reason, main_points, link, ai_result)
-
-        else:
-
-            send_email(title, None, meta, deadline, reason, main_points, link, ai_result)
+        send_email(title, filepaths, meta, deadline, reason, main_points, link, ai_result)
 
 
 
