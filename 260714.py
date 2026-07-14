@@ -45,6 +45,9 @@ session = requests.Session()                   # 연결유지하는 requests 객
 
 def safe_get(url, headers=None, **kwargs):
 
+    print("현재 URL:", url)
+
+  
     for attempt in range(1, 31):
 
         try:
@@ -54,7 +57,7 @@ def safe_get(url, headers=None, **kwargs):
             res = session.get(
                 url,
                 headers=headers,
-                timeout=10,
+                timeout=5,
                 **kwargs
             )
 
