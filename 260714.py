@@ -5,6 +5,7 @@
 import os                          # 운영체제(OS)기능 접근용 (파일존재확인, 환경변수읽기, 파일명처리 등)
 import smtplib                     # 이메일 전송 (SMTP서버로 메일보내기)
 import re                          # 문자패턴찾기 (게시글 제목 분석시)
+import time
 import zipfile
 
   # 2) 웹 크롤링 계열
@@ -38,16 +39,45 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
   # 3) 웹사이트 접속용 브라우저(자동접속(봇) 차단 우회기능 강화버전_requests의 강화버전) & 안정적기능(retry등)
 scraper = cloudscraper.create_scraper()        # create_scraper : 브라우저 하나 생성
 session = requests.Session()                   # 연결유지하는 requests 객체생성(매번 새접속없이 연결 재사용)
-retries = Retry(                               # 접속실패시 자동재시도
-    total=5,                                        # 최대 5번
-    backoff_factor=2,                               # 실패할수록 대기시간 2배씩 증가
-    status_forcelist=[429,500,502,503,504],         # 이 오류코드 나오면 재시도 (429:너무많이 접속, 500:서버오류, 503:서버점검 등)
-)
-adapter = HTTPAdapter(max_retries=retries)     # requests에 retry 기능 장착
 
-session.mount("https://", adapter)             # 모든 웹접속시 retry기능 적용
-session.mount("http://", adapter)
 
+
+
+def safe_get(url, headers=None, **kwargs):
+
+    for attempt in range(1, 31):
+
+        try:
+
+            print(f"[접속시도 {attempt}/30] {url}")
+
+            res = session.get(
+                url,
+                headers=headers,
+                timeout=10,
+                **kwargs
+            )
+
+            print("=" * 60)
+            print(f"과기부 접속 성공 (시도횟수: {attempt}/30)")
+            print("=" * 60)
+
+            return res
+
+        except Exception as e:
+
+            print(
+                f"[실패] {attempt}/30 : "
+                f"{type(e).__name__}"
+            )
+
+            if attempt < 30:
+                print("5초 후 재시도...")
+                time.sleep(5)
+
+    raise Exception(
+        "과기부 사이트 접속 실패 (30회 재시도 후 포기)"
+    )
 
 
 # [기능 정의(def)]  1.공지찾기, 2.첨부찾기, 3.다운로드, 4.메일발송
@@ -65,11 +95,9 @@ def get_latest_notice():
         "Accept-Language": "ko-KR,ko;q=0.9"
     }
 
-    res = session.get(                                         # 웹페이지 다운로드 요청
+    res = safe_get(                                         # 웹페이지 다운로드 요청
         LIST_URL,
-        headers=headers,
-        timeout=30,
-        verify=False
+        headers=headers
     )
 
     print("status=", res.status_code)                           # 접속성공여부 확인용, 오류코드 등도 확인가능
@@ -113,14 +141,13 @@ def get_latest_notice():
 
 def get_attachment_info(detail_url):                      # 상세페이지(detail_url)에서 첨부파일정보 추출하는 기능 정의
 
-    res = session.get(                                    # 상세페이지 HTML 다운로드
+    res = safe_get(                                    # 상세페이지 HTML 다운로드
         detail_url,
         headers={
             "User-Agent":"Mozilla/5.0",
             "Referer":"https://msit.go.kr/",
             "Accept-Language":"ko-KR,ko;q=0.9"
         },
-        timeout=30,
         verify=False
     )
 
@@ -408,7 +435,29 @@ def send_email(title, filepath, meta, deadline, reason, main_points, link, ai_re
 
 def main():
 
-    latest_id, title, link = get_latest_notice()
+
+    print(
+        "OPENROUTER_API_KEY 존재:",
+        bool(os.getenv("OPENROUTER_API_KEY"))
+    )
+
+    try:
+
+        latest_id, title, link = get_latest_notice()
+
+    except Exception as e:
+
+        print("=" * 60)
+        print("과기부 접속 실패")
+        print(e)
+        print("=" * 60)
+
+        return
+
+
+
+
+  
 
     if os.path.exists("last_id.txt"):
 
@@ -469,7 +518,7 @@ def main():
         # 본문 상세 파싱
         # =========================
 
-            res = session.get(link, verify=False)
+            res = safe_get(link, verify=False)
             soup = BeautifulSoup(res.text, "html.parser")
 
 
