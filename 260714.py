@@ -523,7 +523,17 @@ def main():
         # 본문 상세 파싱
         res = safe_get(link, verify=False)
         soup = BeautifulSoup(res.text, "html.parser")
-    
+
+        print("=" * 60)
+        print("제목 후보 확인")
+        print("=" * 60)
+        
+        for h in soup.find_all(["h1", "h2", "h3", "h4", "strong"]):
+            txt = h.get_text(" ", strip=True)
+            if txt:
+                print(txt[:200])
+
+        
         meta = {}
 
         for dl in soup.select(".meta dl.tit_con"):
