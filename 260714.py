@@ -533,7 +533,17 @@ def main():
             if txt:
                 print(txt[:200])
 
+
+        for h in soup.find_all(["h1", "h2", "h3", "h4", "strong"]):
         
+            txt = h.get_text(" ", strip=True)
+        
+            if "행정예고" in txt and len(txt) > 20:
+                title = txt
+                print("제목 추출 성공:", title)
+                break
+
+      
         meta = {}
 
         for dl in soup.select(".meta dl.tit_con"):
