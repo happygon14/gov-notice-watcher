@@ -539,7 +539,7 @@ def main():
         
             txt = h.get_text(" ", strip=True)
         
-            if "행정예고" in txt and len(txt) > 20:
+            if "예고" in txt and len(txt) > 20:
                 title = txt
                 print("제목 추출 성공:", title)
                 break
