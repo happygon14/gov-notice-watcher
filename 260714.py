@@ -466,7 +466,7 @@ def main():
         print(e)
         print("=" * 60)
 
-        return
+        raise
 
 
 
