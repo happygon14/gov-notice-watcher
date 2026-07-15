@@ -48,11 +48,11 @@ def safe_get(url, headers=None, **kwargs):
     print("현재 URL:", url)
 
   
-    for attempt in range(1, 31):
+    for attempt in range(1, 4):
 
         try:
 
-            print(f"[접속시도 {attempt}/30] {url}")
+            print(f"[접속시도 {attempt}/3] {url}")
 
             res = session.get(
                 url,
@@ -62,24 +62,25 @@ def safe_get(url, headers=None, **kwargs):
             )
 
             print("=" * 60)
-            print(f"과기부 접속 성공 (시도횟수: {attempt}/30)")
+            print(f"과기부 접속 성공 (시도횟수: {attempt}/3)")
             print("=" * 60)
+            res.raise_for_status()
 
             return res
 
         except Exception as e:
 
             print(
-                f"[실패] {attempt}/30 : "
+                f"[실패] {attempt}/3 : "
                 f"{type(e).__name__}"
             )
 
-            if attempt < 30:
+            if attempt < 3:
                 print("5초 후 재시도...")
                 time.sleep(5)
 
     raise Exception(
-        "과기부 사이트 접속 실패 (30회 재시도 후 포기)"
+        "과기부 사이트 접속 실패 (3회 재시도 후 포기)"
     )
 
 
