@@ -392,6 +392,12 @@ def create_card_news(
     conclusion
 ):
 
+
+    print("=" * 60)
+    print("카드뉴스 입력값 확인")
+    print("=" * 60)
+    print(summary[:500])
+  
     WIDTH = 1080
     HEIGHT = 1400
 
@@ -683,7 +689,13 @@ def main():
     
                 print("문서길이:", len(document_text))
 
-                    
+                if document_text:
+                
+                    ai_result = analyze_with_ai(
+                        document_text[:30000]
+                    )
+                
+                    print("AI결과 길이:", len(ai_result))  
     
                 break
     
