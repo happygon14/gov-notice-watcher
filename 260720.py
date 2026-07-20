@@ -682,23 +682,8 @@ def main():
                 document_text = extract_hwpx_text(fp)
     
                 print("문서길이:", len(document_text))
-    
-                if document_text:
-    
-                    ai_result = analyze_with_ai(
-                        document_text[:30000]
-                    )
 
                     
-                    create_card_news(
-                        title,
-                        summary,
-                        impact,
-                        review,
-                        conclusion
-                    )
-                  
-                    )
     
                 break
     
@@ -820,8 +805,8 @@ def main():
 
         card_file = create_card_news(title, ai_result, "", "", "")
 
-        if os.path.exists("card_news.png"):
-            filepaths.append("card_news.png")
+        if os.path.exists(card_file):
+            filepaths.append(card_file)
         send_email(title, filepaths, meta, deadline, reason, main_points, link, ai_result)
 
 
