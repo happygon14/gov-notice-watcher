@@ -47,8 +47,8 @@ scraper = cloudscraper.create_scraper()        # create_scraper : 브라우저 �
 session = requests.Session()                   # 연결유지하는 requests 객체생성(매번 새접속없이 연결 재사용)
 
    # 4) 맑은고딕 폰트추가
-FONT_TITLE = "malgun.ttf"
-FONT_BODY = "malgun.ttf"
+FONT_TITLE = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
+FONT_BODY = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
 
 
 def safe_get(url, headers=None, **kwargs):
