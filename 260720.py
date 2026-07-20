@@ -239,7 +239,7 @@ def analyze_with_ai(document_text):
         return "OPENROUTER_API_KEY 없음"
 
     prompt = f"""
-당신은 LG유플러스 NW협력팀 정책담당자이다.
+당신은 LG유플러스 NW협력팀 정책담당자이다. 이는 통신,네트워크 산업 전문 정책분석가이자 기업 전략기획 전문가이다.
 
 아래 행정예고 또는 정책 문서를 분석하라.
 
@@ -254,16 +254,20 @@ def analyze_with_ai(document_text):
 
 출력 형식:
 
-[1. 핵심 요약]
-- 5줄 이내
+■ 핵심 요약
+- 3줄 이내
 
-[2. 주요 내용]
+■ 주요 내용
+- 3줄 이내
 
-[3. 통신업계 영향도]
+■ 통신업계 영향도
+- 3줄 이내
 
-[4. LG유플러스 검토사항]
+■ LG유플러스 검토사항
+- 3줄 이내
 
-[5. 한줄 결론]
+■ 한줄 결론
+- 1줄
 
 문서:
 {document_text}
@@ -399,7 +403,7 @@ def create_card_news(
     print(summary[:500])
   
     WIDTH = 1080
-    HEIGHT = 1400
+    HEIGHT = 1600
 
     img = Image.new(
         "RGB",
@@ -411,7 +415,7 @@ def create_card_news(
 
     title_font = ImageFont.truetype(
         FONT_TITLE,
-        48
+        46
     )
 
     sub_font = ImageFont.truetype(
@@ -454,34 +458,34 @@ def create_card_news(
 
     y = 220
 
-    def draw_box(
-        box_title,
-        text,
-        y
-    ):
+    def draw_box(box_title, text, y):
 
-        box_height = 220
-
+        zzzzzzzwrapped = wrap_text(text, 45)
+    
+        line_count = wrapped.count("\n") + 1
+    
+        box_height = 80 + (line_count * 38)
+    
         draw.rounded_rectangle(
             (40, y, 1040, y + box_height),
             radius=25,
             fill="#F5F7FA"
         )
-
+    
         draw.text(
             (70, y + 20),
             box_title,
             fill="#003366",
             font=sub_font
         )
-
+    
         draw.text(
             (70, y + 70),
-            wrap_text(text, 45),
+            wrapped,
             fill="black",
             font=body_font
         )
-
+    
         return y + box_height + 25
 
 
