@@ -504,14 +504,7 @@ def wrap_text(text, width=35):
 
 #카드뉴스 생성
 
-def create_card_news(
-    title,
-    summary,
-    impact,
-    review,
-    conclusion
-):
-
+def create_card_news(title, summary, impact, review, conclusion, write_date, dept, manager):
 
     print("=" * 60)
     print("카드뉴스 입력값 확인")
@@ -564,6 +557,28 @@ def create_card_news(
         fill="white",
         font=sub_font
     )
+
+    draw.text(
+        (40, 140),
+        f"작성일 : {write_date}",
+        fill="white",
+        font=small_font
+    )
+
+    draw.text(
+        (330, 140),
+        f"부서 : {dept}",
+        fill="white",
+        font=small_font
+    )
+    
+    draw.text(
+        (680, 140),
+        f"담당자 : {manager}",
+        fill="white",
+        font=small_font
+    )
+      
 
     draw.text(
         (40, 80),
@@ -673,26 +688,8 @@ def send_email(title, filepath, meta, deadline, reason, main_points, link, ai_re
     작성일: {meta.get("작성일")}
     부서: {meta.get("부서")}
     담당자: {meta.get("담당자")}
-    연락처: {meta.get("연락처")}
-    의견제출기한: {deadline}
 
-    
-    ==================================================
-    🤖 AI 분석
-    ==================================================
- 
-    {ai_result}
-    
-    ==================================================
-    원문 요약
-    ==================================================
-    [개정이유]
-    {reason[:500]}
-
-    [주요내용]
-    {main_points[:1000]}
-
-    📎 원문 확인:
+    📎 Link :
     {link}
     """
 
@@ -798,26 +795,34 @@ def main():
             filepaths.append(filepath)
     
         ai_result = ""
-    
-        for fp in filepaths:
-    
-            if fp.lower().endswith(".hwpx"):
-    
-                print("AI 분석 시작")
-    
-                document_text = extract_hwpx_text(fp)
-    
-                print("문서길이:", len(document_text))
 
-                if document_text:
-                
-                    ai_result = analyze_with_ai(
-                        document_text[:10000]
-                    )
-                
-                    print("AI결과 길이:", len(ai_result))  
-    
-                break
+        all_text = ""
+        
+        for fp in filepaths:
+        
+            if fp.lower().endswith(".hwpx"):
+        
+                print("HWPX 읽기:", fp)
+        
+                document_text = extract_hwpx_text(fp)
+        
+                print("문서길이:", len(document_text))
+        
+                all_text += document_text
+                all_text += "\n\n"
+
+
+
+        if all_text:
+  
+            print("전체 문서길이:", len(all_text))
+          
+            ai_result = analyze_with_ai(
+                all_text[:8000]
+            )
+          
+            print("AI결과 길이:", len(ai_result))
+          
     
         # 본문 상세 파싱
         res = safe_get(link, verify=False)
@@ -850,6 +855,24 @@ def main():
             v = dl.select_one("dd").get_text(strip=True)
 
             meta[k] = v
+        from datetime import datetime
+
+        raw_date = meta.get("작성일", "")
+        
+        try:
+        
+            dt = datetime.strptime(
+                raw_date,
+                "%b %d, %Y"
+            )
+        
+            display_date = (
+                f"{str(dt.year)[2:]}.{dt.month}.{dt.day}"
+            )
+        
+        except:
+        
+            display_date = raw_date
 
 
         # 2. 본문텍스트
@@ -947,12 +970,14 @@ def main():
             summary,
             impact,
             review,
-            conclusion
+            conclusion,
+            display_date,
+            meta.get("부서",""),
+            meta.get("담당자","")
         )
 
       
-        if os.path.exists(card_file):
-            filepaths.append(card_file)
+
         send_email(title, filepaths, meta, deadline, reason, main_points, link, ai_result)
 
 
