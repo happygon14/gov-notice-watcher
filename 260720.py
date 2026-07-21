@@ -372,6 +372,12 @@ def analyze_with_ai(document_text):
         print(result.keys())
                 
 
+        if "choices" in result:
+            print("=" * 60)
+            print("message 확인")
+            print("=" * 60)
+            print(result["choices"][0].get("message"))
+        
         if (
             "choices" not in result
             or not result["choices"]
@@ -395,6 +401,11 @@ def analyze_with_ai(document_text):
             .get("message", {})
             .get("content")
         )
+
+        print("=" * 60)
+        print("content 확인")
+        print("=" * 60)
+        print(repr(content))
         
         if not content:
             return """
