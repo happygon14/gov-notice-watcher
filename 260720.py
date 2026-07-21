@@ -31,6 +31,7 @@ from email.mime.text import MIMEText            # 메일본문만들기
 from email.mime.multipart import MIMEMultipart  # 본문+이미지+첨부파일 합체 
 from email.mime.base import MIMEBase            # 엑셀/이미지 첨부
 from email import encoders                      # 첨부파일 메일용 변환
+from email.utils import encode_rfc2231
 
 # 1-2. 환경변수 
   # 1) 사이트 주소 (크롤링 대상 웹사이트)
@@ -748,8 +749,8 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
 
     draw.text(
-        (540, y + 70),
-        conclusion_text[:40],
+        (540, y + 95),
+        conclusion_text,
         fill="black",
         font=body_font,
         anchor="mm"
@@ -816,7 +817,11 @@ def send_email(title, filepath, meta, deadline, reason, main_points, link, ai_re
     
         part.add_header(
             "Content-Disposition",
-            f'attachment; filename="{os.path.basename(fp)}"'
+            "attachment",
+            filename=Header(
+                os.path.basename(fp),
+                "utf-8"
+            ).encode()
         )
     
         msg.attach(part)
