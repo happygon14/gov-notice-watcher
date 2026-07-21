@@ -379,7 +379,7 @@ def parse_ai_result(ai_text):
     conclusion = ""
 
     m = re.search(
-        r'■ 핵심 요약(.*?)■ 주요 내용',
+        r'■ 핵심 요약(.*?)■ 통신업계 영향도',
         ai_text,
         re.S
     )
