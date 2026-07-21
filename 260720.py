@@ -255,16 +255,19 @@ def analyze_with_ai(document_text):
 출력 형식:
 
 ■ 핵심 요약
-- 3줄 이내
+- 반드시 3개 항목
+- 각 항목 30자 이내
 
 ■ 통신업계 영향도
-- 3줄 이내
+- 반드시 3개 항목
+- 각 항목 30자 이내
 
 ■ LG유플러스 검토사항
-- 3줄 이내
+- 반드시 3개 항목
+- 각 항목 30자 이내
 
 ■ 한줄 결론
-- 1줄
+- 반드시 30자 이내 한 문장
 
 문서:
 {document_text}
@@ -617,7 +620,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
     
     draw.text(
-        (180, meta_y + 20),
+        (180, meta_y + 40),
         f"작성일 : {write_date}",
         fill="#333333",
         font=small_bold_font,
@@ -625,7 +628,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
     
     draw.text(
-        (540, meta_y + 20),
+        (540, meta_y + 40),
         f"부서 : {dept}",
         fill="#333333",
         font=small_bold_font,
@@ -633,7 +636,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
     
     draw.text(
-        (900, meta_y + 20),
+        (900, meta_y + 40),
         f"담당자 : {manager}",
         fill="#333333",
         font=small_bold_font,
@@ -645,13 +648,19 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
 
     def draw_box(box_title, text, y):
 
-        text = text.replace("- ", "\n• ")
+        text = re.sub(
+            r'[-•]\s*',
+            '\n• ',
+            text
+        )
+        
+        text = text.strip()
 
         wrapped = wrap_text(text, 42)
     
         line_count = wrapped.count("\n") + 1
     
-        box_height = 80 + (line_count * 38)
+        box_height = 75 + (line_count * 38)
     
         draw.rounded_rectangle(
             (40, y, 1040, y + box_height),
@@ -667,7 +676,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
         )
     
         draw.text(
-            (70, y + 70),
+            (70, y + 65),
             wrapped,
             fill="black",
             font=body_font
@@ -701,7 +710,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     
     line_count = conclusion_text.count("\n") + 1
 
-    conclusion_height = 90 + (line_count * 40)
+    conclusion_height = 80 + (line_count * 35)
   
     draw.rounded_rectangle(
         (40, y, 1040, y + conclusion_height),
@@ -717,8 +726,8 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
 
     draw.text(
-        (70, y + 95),
-        conclusion_text,
+        (540, y + 95),
+        conclusion_text[:30],
         fill="black",
         font=body_font,
         anchor="mm"
