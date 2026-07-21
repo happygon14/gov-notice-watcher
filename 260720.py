@@ -375,7 +375,23 @@ def analyze_with_ai(document_text):
         if "choices" in result:
         
             content = result["choices"][0]["message"]["content"]
-        
+
+            if not content:
+                return """
+            ■ 핵심 요약
+            AI 응답 없음
+            
+            ■ 통신업계 영향도
+            AI 응답 없음
+            
+            ■ LG유플러스 검토사항
+            AI 응답 없음
+            
+            ■ 한줄 결론
+            AI 응답 없음
+            """
+
+          
             return content
         
         if "error" in result:
