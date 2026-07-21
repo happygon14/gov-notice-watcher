@@ -684,7 +684,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
             (70, y + 65),
             wrapped,
             fill="black",
-            font=body_font
+            font=body_font,
             spacing=5
         )
     
