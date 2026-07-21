@@ -32,6 +32,7 @@ from email.mime.multipart import MIMEMultipart  # 본문+이미지+첨부파일 
 from email.mime.base import MIMEBase            # 엑셀/이미지 첨부
 from email import encoders                      # 첨부파일 메일용 변환
 from email.utils import encode_rfc2231
+from email.header import Header
 
 # 1-2. 환경변수 
   # 1) 사이트 주소 (크롤링 대상 웹사이트)
