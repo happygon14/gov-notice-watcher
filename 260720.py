@@ -257,9 +257,6 @@ def analyze_with_ai(document_text):
 ■ 핵심 요약
 - 3줄 이내
 
-■ 주요 내용
-- 3줄 이내
-
 ■ 통신업계 영향도
 - 3줄 이내
 
@@ -317,25 +314,109 @@ def analyze_with_ai(document_text):
                 
 
         if "choices" in result:
+        
             content = result["choices"][0]["message"]["content"]
-
-            print("=" * 60)
-            print("AI 분석 결과")
-            print("=" * 60)
-            print(content[:3000])
         
             return content
+        
+        if "error" in result:
+    
+            print("AI 호출 실패")
+            print(result["error"])
+    
+            return """
+■ 핵심 요약
+AI 분석 실패
 
+■ 통신업계 영향도
+AI 분석 실패
 
+■ LG유플러스 검토사항
+AI 분석 실패
 
-      
-        return str(result)
+■ 한줄 결론
+AI 분석 실패
+"""
+    
+        return """
+■ 핵심 요약
+AI 분석 실패
 
+■ 통신업계 영향도
+AI 분석 실패
+
+■ LG유플러스 검토사항
+AI 분석 실패
+
+■ 한줄 결론
+AI 분석 실패
+"""
+    
     except Exception as e:
-
+    
         print("AI 분석 실패:", e)
+    
+        return f"""
+■ 핵심 요약
+AI 분석 실패
 
-        return f"AI 분석 실패: {e}"
+■ 통신업계 영향도
+AI 분석 실패
+
+■ LG유플러스 검토사항
+AI 분석 실패
+
+■ 한줄 결론
+{str(e)}
+"""
+
+
+def parse_ai_result(ai_text):
+
+    summary = ""
+    impact = ""
+    review = ""
+    conclusion = ""
+
+    m = re.search(
+        r'■ 핵심 요약(.*?)■ 주요 내용',
+        ai_text,
+        re.S
+    )
+    if m:
+        summary = m.group(1).strip()
+
+    m = re.search(
+        r'■ 통신업계 영향도(.*?)■ LG유플러스 검토사항',
+        ai_text,
+        re.S
+    )
+    if m:
+        impact = m.group(1).strip()
+
+    m = re.search(
+        r'■ LG유플러스 검토사항(.*?)■ 한줄 결론',
+        ai_text,
+        re.S
+    )
+    if m:
+        review = m.group(1).strip()
+
+    m = re.search(
+        r'■ 한줄 결론(.*)',
+        ai_text,
+        re.S
+    )
+    if m:
+        conclusion = m.group(1).strip()
+
+    return (
+        summary,
+        impact,
+        review,
+        conclusion
+    )
+
 
 
 
@@ -403,7 +484,7 @@ def create_card_news(
     print(summary[:500])
   
     WIDTH = 1080
-    HEIGHT = 1600
+    HEIGHT = 2200
 
     img = Image.new(
         "RGB",
@@ -490,19 +571,19 @@ def create_card_news(
 
 
     y = draw_box(
-        "📌 핵심요약",
+        "▶ 핵심요약",
         summary,
         y
     )
 
     y = draw_box(
-        "📡 통신업계 영향",
+        "▶ 통신업계 영향",
         impact,
         y
     )
 
     y = draw_box(
-        "✅ LG유플러스 검토사항",
+        "▶ LG유플러스 검토사항",
         review,
         y
     )
@@ -516,7 +597,7 @@ def create_card_news(
 
     draw.text(
         (70, y + 20),
-        "💡 한줄 결론",
+        "▶ 한줄 결론",
         fill="#003366",
         font=sub_font
     )
@@ -819,8 +900,22 @@ def main():
         print("주요내용:")
         print(main_points[:1000])
 
-        card_file = create_card_news(title, ai_result, "", "", "")
+        summary, impact, review, conclusion = parse_ai_result(ai_result)
 
+        print("summary=", summary)
+        print("impact=", impact)
+        print("review=", review)
+        print("conclusion=", conclusion)
+        
+        card_file = create_card_news(
+            title,
+            summary,
+            impact,
+            review,
+            conclusion
+        )
+
+      
         if os.path.exists(card_file):
             filepaths.append(card_file)
         send_email(title, filepaths, meta, deadline, reason, main_points, link, ai_result)
