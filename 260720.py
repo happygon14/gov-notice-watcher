@@ -460,7 +460,7 @@ def create_card_news(
 
     def draw_box(box_title, text, y):
 
-        zzzzzzzwrapped = wrap_text(text, 45)
+        wrapped = wrap_text(text, 45)
     
         line_count = wrapped.count("\n") + 1
     
