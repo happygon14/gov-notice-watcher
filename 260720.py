@@ -444,7 +444,11 @@ def parse_ai_result(ai_text):
     )
     if m:
         conclusion = m.group(1).strip()
-
+    
+    summary = summary.replace("- ", "\n• ")
+    impact = impact.replace("- ", "\n• ")
+    review = review.replace("- ", "\n• ")
+  
     return (
         summary,
         impact,
@@ -495,9 +499,22 @@ def extract_hwpx_text(filepath):
 
 def wrap_text(text, width=35):
 
-    return "\n".join(
-        textwrap.wrap(text, width=width)
-    )
+    result = []
+
+    for line in text.splitlines():
+
+        if not line.strip():
+            result.append("")
+            continue
+
+        result.extend(
+            textwrap.wrap(
+                line,
+                width=width
+            )
+        )
+
+    return "\n".join(result)
 
 
 
@@ -546,50 +563,75 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     # 헤더
     # ====================
 
+    title_wrapped = wrap_text(title, 28)
+    
+    title_lines = title_wrapped.count("\n") + 1
+    
+    header_height = 90 + (title_lines * 55)
+    
     draw.rectangle(
-        (0, 0, WIDTH, 180),
+        (0, 0, WIDTH, header_height),
         fill="#C8102E"
     )
-
+    
     draw.text(
-        (40, 30),
+        (40, 20),
         "과기부 입법행정예고 분석",
         fill="white",
         font=sub_font
     )
-
+    
     draw.text(
-        (40, 140),
-        f"작성일 : {write_date}",
+        (40, 65),
+        title_wrapped,
         fill="white",
-        font=small_font
+        font=title_font
     )
-
+    
+    # ====================
+    # 메타정보 영역
+    # ====================
+    
+    meta_y = header_height + 20
+    
+    draw.rounded_rectangle(
+        (
+            40,
+            meta_y,
+            1040,
+            meta_y + 80
+        ),
+        radius=20,
+        fill="#F2F4F7"
+    )
+    
     draw.text(
-        (330, 140),
-        f"부서 : {dept}",
-        fill="white",
+        (60, meta_y + 20),
+        f"작성일 : {write_date}",
+        fill="#333333",
         font=small_font
     )
     
     draw.text(
-        (680, 140),
-        f"담당자 : {manager}",
-        fill="white",
+        (350, meta_y + 20),
+        f"부서 : {dept}",
+        fill="#333333",
         font=small_font
     )
-      
-
+    
     draw.text(
-        (40, 80),
-        wrap_text(title, 28),
-        fill="white",
-        font=title_font
+        (700, meta_y + 20),
+        f"담당자 : {manager}",
+        fill="#333333",
+        font=small_font
     )
+    
+    y = meta_y + 110
 
-    y = 220
 
     def draw_box(box_title, text, y):
+
+        text = text.replace("- ", "\n• ")
 
         wrapped = wrap_text(text, 45)
     
@@ -638,9 +680,17 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
         y
     )
 
+    conclusion_text = wrap_text(
+        conclusion,
+        45
+    )
+    
+    line_count = conclusion_text.count("\n") + 1
 
+    conclusion_height = 90 + (line_count * 40)
+  
     draw.rounded_rectangle(
-        (40, y, 1040, y + 180),
+        (40, y, 1040, y + conclusion_height),
         radius=25,
         fill="#E8F4FF"
     )
@@ -654,7 +704,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
 
     draw.text(
         (70, y + 80),
-        wrap_text(conclusion, 45),
+        conclusion_text,
         fill="black",
         font=body_font
     )
@@ -662,8 +712,17 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
 
     filename = "card_news.png"
 
+    img = img.crop(
+        (
+            0,
+            0,
+            WIDTH,
+            y + conclusion_height + 80
+        )
+    )
+    
     img.save(filename)
-
+    
     return filename
 
 
