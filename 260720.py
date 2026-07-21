@@ -372,27 +372,46 @@ def analyze_with_ai(document_text):
         print(result.keys())
                 
 
-        if "choices" in result:
+        if (
+            "choices" not in result
+            or not result["choices"]
+        ):
+            return """
+        ■ 핵심 요약
+        AI 응답 없음
         
-            content = result["choices"][0]["message"]["content"]
-
-            if not content:
-                return """
-            ■ 핵심 요약
-            AI 응답 없음
-            
-            ■ 통신업계 영향도
-            AI 응답 없음
-            
-            ■ LG유플러스 검토사항
-            AI 응답 없음
-            
-            ■ 한줄 결론
-            AI 응답 없음
-            """
-
-          
-            return content
+        ■ 통신업계 영향도
+        AI 응답 없음
+        
+        ■ LG유플러스 검토사항
+        AI 응답 없음
+        
+        ■ 한줄 결론
+        AI 응답 없음
+        """
+        
+        content = (
+            result["choices"][0]
+            .get("message", {})
+            .get("content")
+        )
+        
+        if not content:
+            return """
+        ■ 핵심 요약
+        AI 응답 없음
+        
+        ■ 통신업계 영향도
+        AI 응답 없음
+        
+        ■ LG유플러스 검토사항
+        AI 응답 없음
+        
+        ■ 한줄 결론
+        AI 응답 없음
+        """
+        
+        return content
         
         if "error" in result:
     
