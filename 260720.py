@@ -696,7 +696,7 @@ def main():
                 if document_text:
                 
                     ai_result = analyze_with_ai(
-                        document_text[:30000]
+                        document_text[:10000]
                     )
                 
                     print("AI결과 길이:", len(ai_result))  
