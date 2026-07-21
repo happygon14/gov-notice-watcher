@@ -444,6 +444,12 @@ def parse_ai_result(ai_text):
     )
     if m:
         conclusion = m.group(1).strip()
+
+        conclusion = re.sub(
+            r'^[-•]\s*',
+            '',
+            conclusion
+        )
     
     summary = summary.replace("- ", "\n• ")
     impact = impact.replace("- ", "\n• ")
@@ -551,13 +557,18 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
 
     body_font = ImageFont.truetype(
         FONT_BODY,
-        28
+        26
     )
 
     small_font = ImageFont.truetype(
         FONT_BODY,
         22
     )
+
+    small_bold_font = ImageFont.truetype(
+        FONT_TITLE,
+        22
+    )  
 
     # ====================
     # 헤더
@@ -606,24 +617,27 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
     
     draw.text(
-        (60, meta_y + 20),
+        (180, meta_y + 20),
         f"작성일 : {write_date}",
         fill="#333333",
-        font=small_font
+        font=small_bold_font,
+        anchor="mm"
     )
     
     draw.text(
-        (350, meta_y + 20),
+        (540, meta_y + 20),
         f"부서 : {dept}",
         fill="#333333",
-        font=small_font
+        font=small_bold_font,
+        anchor="mm"
     )
     
     draw.text(
-        (700, meta_y + 20),
+        (900, meta_y + 20),
         f"담당자 : {manager}",
         fill="#333333",
-        font=small_font
+        font=small_bold_font,
+        anchor="mm"
     )
     
     y = meta_y + 110
@@ -633,7 +647,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
 
         text = text.replace("- ", "\n• ")
 
-        wrapped = wrap_text(text, 45)
+        wrapped = wrap_text(text, 42)
     
         line_count = wrapped.count("\n") + 1
     
@@ -703,10 +717,11 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
 
     draw.text(
-        (70, y + 80),
+        (70, y + 95),
         conclusion_text,
         fill="black",
-        font=body_font
+        font=body_font,
+        anchor="mm"
     )
 
 
@@ -741,12 +756,6 @@ def send_email(title, filepath, meta, deadline, reason, main_points, link, ai_re
     msg["To"] = TO_EMAIL
 
     body = f"""
-
-    공고명: {title}
-
-    작성일: {meta.get("작성일")}
-    부서: {meta.get("부서")}
-    담당자: {meta.get("담당자")}
 
     📎 Link :
     {link}
