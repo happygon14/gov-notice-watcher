@@ -7,6 +7,7 @@ import smtplib                     # 이메일 전송 (SMTP서버로 메일보�
 import re                          # 문자패턴찾기 (게시글 제목 분석시)
 import time
 import zipfile
+from urllib.parse import unquote
 
   # 2) 웹 크롤링 계열
 import requests                     # 웹사이트 접속(GET/POST)
@@ -219,9 +220,24 @@ def download_file(file_id, file_sn, ext, detail_url):
     print(res.headers.get("content-disposition"))
     print("download size=", len(res.content))
 
-    filename = f"attach.{ext}"
-
-    with open(filename,"wb") as f:
+    # 원본 파일명 추출
+    content_disposition = res.headers.get(
+        "content-disposition",
+        ""
+    )
+    
+    m = re.search(
+        r'filename="(.*?)"',
+        content_disposition
+    )
+    
+    if m:
+        filename = unquote(m.group(1))
+    else:
+        filename = f"attach.{ext}"
+    
+    
+    with open(filename, "wb") as f:
         f.write(res.content)
 
     return filename
@@ -867,14 +883,17 @@ def main():
         filepaths = []
     
         for file_id, file_sn, ext in attachments:
-    
+
+            if ext.lower() != "hwpx":
+                continue
+        
             filepath = download_file(
                 file_id,
                 file_sn,
                 ext,
                 link
             )
-    
+        
             filepaths.append(filepath)
     
         ai_result = ""
