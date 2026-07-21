@@ -256,18 +256,21 @@ def analyze_with_ai(document_text):
 
 ■ 핵심 요약
 - 반드시 3개 항목
-- 각 항목 30자 이내
-
+- 각 항목 60자 이내이면서, 단순 키워드 나열 금지. 반드시 "변화내용 + 영향 또는 검토 필요성"형태로 작성한다.
+  (나쁜예, 내진기준강화.   좋은예, 내진기준 강화로 통신설비 구축 및 유지관리 기준 검토 필요)
 ■ 통신업계 영향도
 - 반드시 3개 항목
-- 각 항목 30자 이내
+- 각 항목 60자 이내이면서, 단순 키워드 나열 금지. 반드시 "변화내용 + 영향 또는 검토 필요성"형태로 작성한다.
+  (나쁜예, 내진기준강화.   좋은예, 내진기준 강화로 통신설비 구축 및 유지관리 기준 검토 필요)
 
 ■ LG유플러스 검토사항
 - 반드시 3개 항목
-- 각 항목 30자 이내
+- 각 항목 60자 이내이면서, 단순 키워드 나열 금지. 반드시 "변화내용 + 영향 또는 검토 필요성"형태로 작성한다.
+  (나쁜예, 내진기준강화.   좋은예, 내진기준 강화로 통신설비 구축 및 유지관리 기준 검토 필요)
 
 ■ 한줄 결론
-- 반드시 30자 이내 한 문장
+- 각 항목 60자 이내이면서, 단순 키워드 나열 금지. 반드시 "변화내용 + 영향 또는 검토 필요성"형태로 작성한다.
+  (나쁜예, 내진기준강화.   좋은예, 내진기준 강화로 통신설비 구축 및 유지관리 기준 검토 필요)
 
 문서:
 {document_text}
@@ -560,7 +563,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
 
     body_font = ImageFont.truetype(
         FONT_BODY,
-        26
+        24
     )
 
     small_font = ImageFont.truetype(
@@ -660,29 +663,32 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     
         line_count = wrapped.count("\n") + 1
     
-        box_height = 75 + (line_count * 38)
+        box_height = 90 + (line_count * 30)
     
         draw.rounded_rectangle(
             (40, y, 1040, y + box_height),
             radius=25,
             fill="#F5F7FA"
         )
-    
+
+        # 제목
         draw.text(
             (70, y + 20),
             box_title,
             fill="#003366",
             font=sub_font
         )
-    
+
+        # 본문
         draw.text(
             (70, y + 65),
             wrapped,
             fill="black",
             font=body_font
+            spacing=5
         )
     
-        return y + box_height + 25
+        return y + box_height + 20
 
 
     y = draw_box(
@@ -726,8 +732,8 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     )
 
     draw.text(
-        (540, y + 95),
-        conclusion_text[:30],
+        (540, y + 70),
+        conclusion_text[:40],
         fill="black",
         font=body_font,
         anchor="mm"
