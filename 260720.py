@@ -302,6 +302,41 @@ def analyze_with_ai(document_text):
             timeout=120
         )
 
+        # =========================
+        # 429 재시도 1회
+        # =========================
+        
+        if response.status_code == 429:
+        
+            retry_after = 10
+        
+            try:
+                err = response.json()
+        
+                retry_after = int(
+                    err["error"]["metadata"]
+                       .get("retry_after_seconds", 10)
+                )
+        
+            except:
+                pass
+        
+            print(
+                f"429 발생 → {retry_after}초 대기 후 재시도"
+            )
+        
+            time.sleep(retry_after)
+        
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=120
+            )
+
+
+      
+      
         print("OPENROUTER 응답 수신")
         print("STATUS:", response.status_code)
         print(response.text[:500])
