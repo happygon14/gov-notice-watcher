@@ -269,8 +269,8 @@ def analyze_with_ai(document_text):
 - 규제 변화
 - 비용 증가 가능성
 - 대응 필요사항
-- 아래 4개 모든 사항에 대해 3개 항목으로 작성하되, 각각의 항목은 60자 이내로 작성
-- 각 항목은 반드시 "- "로 시작
+- 아래 4개항목 중 처음 3개항목(핵심 요약, 통신업계 영향도, LG유플러스 검토사항)은 각 3개 항목으로 작성하고 마지막 항목(한줄 결론)은 1개 항목으로 작성하되, 각각의 항목은 60자 이내로 작성
+- 처음 3개항목(핵심 요약, 통신업계 영향도, LG유플러스 검토사항)의 각 항목은 반드시 "- "로 시작
 - "변화내용 + 영향 또는 검토필요성"형태로 작성
 
 출력 형식:
@@ -291,9 +291,7 @@ def analyze_with_ai(document_text):
 - ㅇㅇㅇㅇ
 
 ■ 한줄 결론
-- ㅇㅇㅇㅇ
-- ㅇㅇㅇㅇ
-- ㅇㅇㅇㅇ
+ㅇㅇㅇㅇ
 
 문서:
 {document_text}
@@ -536,11 +534,7 @@ def parse_ai_result(ai_text):
             '',
             conclusion
         )
-    
-    summary = summary.replace("- ", "\n• ")
-    impact = impact.replace("- ", "\n• ")
-    review = review.replace("- ", "\n• ")
-  
+      
     return (
         summary,
         impact,
@@ -732,9 +726,10 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     def draw_box(box_title, text, y):
 
         text = re.sub(
-            r'[-•]\s*',
-            '\n• ',
-            text
+            r'^\s*[-•]\s*',
+            '• ',
+            text,
+            flags=re.M
         )
         
         text = text.strip()
