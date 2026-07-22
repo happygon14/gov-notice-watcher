@@ -99,7 +99,7 @@ def safe_get(url, headers=None, **kwargs):
 
 # 2-1. 최신 공지찾기
 
-def get_latest_notice():
+def get_latest_notices(limit=3):
     headers = {                                                # 브라우저 설정
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -121,35 +121,49 @@ def get_latest_notice():
 
     links = soup.find_all("a", onclick=True)                    # onclick(자바스크립트방식 링크)에 있는 a태그 전부 찾기
 
+    notices = []
+
     for a in links:                                             # 링크 하나씩 검사
 
         onclick = a.get("onclick","")                           # onclick 내용 가져오기
 
-        if "fn_detail" in onclick:                              # 상세보기 링크만 선택
+        if "fn_detail" not in onclick:                              # 상세보기 링크만 선택
+            continue
+          
+        m = re.search(r"\d{5,}", onclick)                   # 숫자 5자리 이상 찾기(공지번호 추출용)
 
-            m = re.search(r"\d{5,}", onclick)                   # 숫자 5자리 이상 찾기(공지번호 추출용)
+        if not m:
+            continue
+          
+        notice_id = m.group()                           # 최상단(최신) 게시글번호 추출
+        title = a.get_text(strip=True)                  # 제목 추출
 
-            if m:
-                notice_id = m.group()                           # 최상단(최신) 게시글번호 추출
-                title = a.get_text(strip=True)                  # 제목 추출
+        detail_url = (                                  # url 추출
+            "https://msit.go.kr/bbs/view.do"
+            "?sCode=user"
+            "&mId=109"
+            "&mPid=103"
+            "&pageIndex="
+            "&bbsSeqNo=84"
+            f"&nttSeqNo={notice_id}"
+            "&searchOpt=ALL"
+            "&searchTxt="
+        )
 
-                detail_url = (                                  # url 추출
-                        "https://msit.go.kr/bbs/view.do"
-                        "?sCode=user"
-                        "&mId=109"
-                        "&mPid=103"
-                        "&pageIndex="
-                        "&bbsSeqNo=84"
-                        f"&nttSeqNo={notice_id}"
-                        "&searchOpt=ALL"
-                        "&searchTxt="
-                )
-                
-                return notice_id,title,detail_url                 # 게시글번호, 제목, url 반환
+        notices.append({
+            "id": notice_id,
+            "title": title,
+            "link": detail_url
+        })
+
+        if len(notices) >= limit:
+            break
+    if not notices :
+        raise Exception("공지 못찾음")
+    
+    return notices                 # 게시글번호, 제목, url 반환
 
     
-    raise Exception("공지 못찾음")
-
 
 # 2-2. 첨부파일 찾기
 # 흐름 : 상세페이지접속  →  HTML분석  →  첨부파일 링크 찾기  →  다운로드용 파일번호 추출  →  리스트로 반환
@@ -912,7 +926,8 @@ def main():
 
     try:
 
-        latest_id, title, link = get_latest_notice()
+        notices = get_latest_notices(limit=3)
+        latest_id = notices[0]["id"]
 
     except Exception as e:
 
@@ -936,214 +951,236 @@ def main():
     else:
         old_id = None
 
+    new_notices = []
 
-    if latest_id != old_id:
-
-        print("새 공지 발견")
+    for notice in notices:
     
-        attachments = get_attachment_info(link)
+        if notice["id"] == old_id:
+            break
     
-        filepaths = []
+        new_notices.append(notice)
     
-        for file_id, file_sn, ext in attachments:
-
-            if ext.lower() != "hwpx":
-                continue
-        
-            filepath = download_file(
-                file_id,
-                file_sn,
-                ext,
-                link
-            )
-        
-            filepaths.append(filepath)
+    new_notices = new_notices[:3]
     
-        ai_result = ""
-
-        all_text = ""
-        
-        for fp in filepaths:
-        
-            if fp.lower().endswith(".hwpx"):
-        
-                print("HWPX 읽기:", fp)
-        
-                document_text = extract_hwpx_text(fp)
-        
-                print("문서길이:", len(document_text))
-        
-                all_text += document_text
-                all_text += "\n\n"
-
-
-
-        if all_text:
+    new_notices.reverse()
   
-            print("전체 문서길이:", len(all_text))
+    if latest_id != old_id:
+    
+        print("새 공지 발견")
+        print("발송 대상:", len(new_notices))
+    
+        for notice in new_notices:
+    
+            title = notice["title"]
+            link = notice["link"]
+    
+            print("=" * 60)
+            print("처리중:", title)
+            print("=" * 60)
+    
+            attachments = get_attachment_info(link)
+    
+            filepaths = []
+    
+            for file_id, file_sn, ext in attachments:
+    
+                if ext.lower() != "hwpx":
+                    continue
+            
+                filepath = download_file(
+                    file_id,
+                    file_sn,
+                    ext,
+                    link
+                )
+            
+                filepaths.append(filepath)
+        
+            ai_result = ""
+    
+            all_text = ""
+            
+            for fp in filepaths:
+            
+                if fp.lower().endswith(".hwpx"):
+            
+                    print("HWPX 읽기:", fp)
+            
+                    document_text = extract_hwpx_text(fp)
+            
+                    print("문서길이:", len(document_text))
+            
+                    all_text += document_text
+                    all_text += "\n\n"
+    
+    
+    
+            if all_text:
+      
+                print("전체 문서길이:", len(all_text))
+              
+                ai_result = analyze_with_ai(
+                    all_text[:8000]
+                )
+              
+                print("AI결과 길이:", len(ai_result))
+              
+        
+            # 본문 상세 파싱
+            res = safe_get(link, verify=False)
+            soup = BeautifulSoup(res.text, "html.parser")
+    
+            print("=" * 60)
+            print("제목 후보 확인")
+            print("=" * 60)
+            
+            for h in soup.find_all(["h1", "h2", "h3", "h4", "strong"]):
+                txt = h.get_text(" ", strip=True)
+                if txt:
+                    print(txt[:200])
+    
+    
+            for h in soup.find_all(["h1", "h2", "h3", "h4", "strong"]):
+            
+                txt = h.get_text(" ", strip=True)
+            
+                if "예고" in txt and len(txt) > 20:
+                    title = txt
+                    print("제목 추출 성공:", title)
+                    break
+    
           
-            ai_result = analyze_with_ai(
-                all_text[:8000]
+            meta = {}
+    
+            for dl in soup.select(".meta dl.tit_con"):
+                k = dl.select_one("dt").get_text(strip=True)
+                v = dl.select_one("dd").get_text(strip=True)
+    
+                meta[k] = v
+            from datetime import datetime
+    
+            raw_date = meta.get("작성일", "")
+            
+            try:
+            
+                dt = datetime.strptime(
+                    raw_date,
+                    "%b %d, %Y"
+                )
+            
+                display_date = (
+                    f"{str(dt.year)[2:]}.{dt.month}.{dt.day}"
+                )
+            
+            except:
+            
+                display_date = raw_date
+    
+    
+            # 2. 본문텍스트
+            content_tag = soup.select_one("#cont-wrap")
+    
+            for tag in content_tag.select("script, style"):
+                tag.decompose()
+    
+            content = content_tag.get_text(" ", strip=True)
+            content = re.sub(r"\s+", " ", content)
+    
+    
+            # 3. 의견제출기한
+            deadline_match = re.search(
+                r'(\d{4}\s*년\s*\d+\s*월\s*\d+\s*일)\s*까지',
+                content,
+                re.S
             )
-          
-            print("AI결과 길이:", len(ai_result))
+    
+            deadline = (
+                deadline_match.group(1)
+                if deadline_match
+                else "미추출"
+            )
+    
+            deadline = re.sub(r"\s+", " ", deadline).strip()
+    
+    
+            # 4. 개정이유
+            reason_match = re.search(
+                r'1\.\s*개정이유(.*?)2\.\s*주요내용',
+                content,
+                re.S
+            )        
+    
+            reason = (
+                reason_match.group(1).strip()
+                if reason_match else ""
+            )
+    
+    
+            # 5. 주요내용
+            main_match = re.search(
+                r'2\.\s*주요내용(.*?)3\.\s*의견제출',
+                content,
+                re.S
+            )
+    
+            main_points = (
+                main_match.group(1).strip()
+                if main_match else ""
+            )
+    
+    
+                        
+            # ===== 텍스트 정제 추가 =====
+            reason = re.sub(r"\s+", " ", reason).strip()
+            # 줄바꿈은 살리고 과한 공백만 정리
+            main_points = re.sub(r'[ \t]+', ' ', main_points).strip()
+            # 항목 시작 줄바꿈 보강
+            main_points = re.sub(r'\s*([가-하])\s*\.', r'\n\n\1.', main_points)
+            
+            # 인용문 앞 줄바꿈
+            main_points = re.sub(r'\s*(“)', r'\n\1', main_points)
+            
+            # 가. 나. 다. 줄바꿈 복원
+            main_points = re.sub(r'([가-하])\.', r'\n\1.', main_points)
+    
+            # =========================
+            # 로그 테스트
+            # =========================
+    
+            print("공고명:", title)
+            print("작성일:", meta.get("작성일"))
+            print("소관부서:", meta.get("부서"))
+            print("담당자:", meta.get("담당자"))
+            print("연락처:", meta.get("연락처"))
+            print("의견제출기한:", deadline)
+    
+            print("개정이유:")
+            print(reason[:500])
+    
+            print("주요내용:")
+            print(main_points[:1000])
+    
+            summary, impact, review, conclusion = parse_ai_result(ai_result)
+    
+            print("summary=", summary)
+            print("impact=", impact)
+            print("review=", review)
+            print("conclusion=", conclusion)
+            
+            card_file = create_card_news(
+                title,
+                summary,
+                impact,
+                review,
+                conclusion,
+                display_date,
+                meta.get("부서",""),
+                meta.get("담당자","")
+            )
+    
           
     
-        # 본문 상세 파싱
-        res = safe_get(link, verify=False)
-        soup = BeautifulSoup(res.text, "html.parser")
-
-        print("=" * 60)
-        print("제목 후보 확인")
-        print("=" * 60)
-        
-        for h in soup.find_all(["h1", "h2", "h3", "h4", "strong"]):
-            txt = h.get_text(" ", strip=True)
-            if txt:
-                print(txt[:200])
-
-
-        for h in soup.find_all(["h1", "h2", "h3", "h4", "strong"]):
-        
-            txt = h.get_text(" ", strip=True)
-        
-            if "예고" in txt and len(txt) > 20:
-                title = txt
-                print("제목 추출 성공:", title)
-                break
-
-      
-        meta = {}
-
-        for dl in soup.select(".meta dl.tit_con"):
-            k = dl.select_one("dt").get_text(strip=True)
-            v = dl.select_one("dd").get_text(strip=True)
-
-            meta[k] = v
-        from datetime import datetime
-
-        raw_date = meta.get("작성일", "")
-        
-        try:
-        
-            dt = datetime.strptime(
-                raw_date,
-                "%b %d, %Y"
-            )
-        
-            display_date = (
-                f"{str(dt.year)[2:]}.{dt.month}.{dt.day}"
-            )
-        
-        except:
-        
-            display_date = raw_date
-
-
-        # 2. 본문텍스트
-        content_tag = soup.select_one("#cont-wrap")
-
-        for tag in content_tag.select("script, style"):
-            tag.decompose()
-
-        content = content_tag.get_text(" ", strip=True)
-        content = re.sub(r"\s+", " ", content)
-
-
-        # 3. 의견제출기한
-        deadline_match = re.search(
-            r'(\d{4}\s*년\s*\d+\s*월\s*\d+\s*일)\s*까지',
-            content,
-            re.S
-        )
-
-        deadline = (
-            deadline_match.group(1)
-            if deadline_match
-            else "미추출"
-        )
-
-        deadline = re.sub(r"\s+", " ", deadline).strip()
-
-
-        # 4. 개정이유
-        reason_match = re.search(
-            r'1\.\s*개정이유(.*?)2\.\s*주요내용',
-            content,
-            re.S
-        )        
-
-        reason = (
-            reason_match.group(1).strip()
-            if reason_match else ""
-        )
-
-
-        # 5. 주요내용
-        main_match = re.search(
-            r'2\.\s*주요내용(.*?)3\.\s*의견제출',
-            content,
-            re.S
-        )
-
-        main_points = (
-            main_match.group(1).strip()
-            if main_match else ""
-        )
-
-
-                    
-        # ===== 텍스트 정제 추가 =====
-        reason = re.sub(r"\s+", " ", reason).strip()
-        # 줄바꿈은 살리고 과한 공백만 정리
-        main_points = re.sub(r'[ \t]+', ' ', main_points).strip()
-        # 항목 시작 줄바꿈 보강
-        main_points = re.sub(r'\s*([가-하])\s*\.', r'\n\n\1.', main_points)
-        
-        # 인용문 앞 줄바꿈
-        main_points = re.sub(r'\s*(“)', r'\n\1', main_points)
-        
-        # 가. 나. 다. 줄바꿈 복원
-        main_points = re.sub(r'([가-하])\.', r'\n\1.', main_points)
-
-        # =========================
-        # 로그 테스트
-        # =========================
-
-        print("공고명:", title)
-        print("작성일:", meta.get("작성일"))
-        print("소관부서:", meta.get("부서"))
-        print("담당자:", meta.get("담당자"))
-        print("연락처:", meta.get("연락처"))
-        print("의견제출기한:", deadline)
-
-        print("개정이유:")
-        print(reason[:500])
-
-        print("주요내용:")
-        print(main_points[:1000])
-
-        summary, impact, review, conclusion = parse_ai_result(ai_result)
-
-        print("summary=", summary)
-        print("impact=", impact)
-        print("review=", review)
-        print("conclusion=", conclusion)
-        
-        card_file = create_card_news(
-            title,
-            summary,
-            impact,
-            review,
-            conclusion,
-            display_date,
-            meta.get("부서",""),
-            meta.get("담당자","")
-        )
-
-      
-
-        send_email(title, filepaths, meta, deadline, reason, main_points, link, ai_result)
+            send_email(title, filepaths, meta, deadline, reason, main_points, link, ai_result)
 
 
 
