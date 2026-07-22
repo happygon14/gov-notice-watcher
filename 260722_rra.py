@@ -264,3 +264,8 @@ def main():
         print(n["title"])
         print(n["link"])
         print("-"*40)
+
+
+
+if __name__ == "__main__":
+    main()
