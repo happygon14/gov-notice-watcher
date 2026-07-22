@@ -309,7 +309,7 @@ def analyze_with_ai(document_text):
         "messages": [
             {
                 "role": "system",
-                "content": "반드시 한국어만 사용한다."
+                "content": "반드시 한국어만 사용한다. 사고과정(reasoning)은 출력하지 말고 최종 결과만 출력한다."
             },
             {
                 "role": "user",
@@ -413,6 +413,15 @@ def analyze_with_ai(document_text):
         print("content 확인")
         print("=" * 60)
         print(repr(content))
+
+        print("=" * 60)
+        print("finish_reason 확인")
+        print("=" * 60)
+        
+        print(
+            result["choices"][0]
+            .get("finish_reason")
+        )
         
         if not content:
             return """
