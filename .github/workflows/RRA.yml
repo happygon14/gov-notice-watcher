@@ -1,0 +1,62 @@
+# yml파일은 GitHub Action가 자동으로 파이썬을 실행하는 설계도임.
+
+# 흐름도
+# 1. 30분마다 실행
+# 2. Ubuntu 가상 컴퓨터 생성
+# 3. 코드 다운로드
+# 4. Python 설치
+# 5. 라이브러리 설치
+# 6. check_notice.py 실행
+# 7. 새 글이면 메일 발송
+# 8. last_id.txt 저장
+# 9. GitHub에 커밋
+# 10. 컴퓨터 삭제(세션 종료)
+
+
+name: Check RRA Notice                            # 워크플로우의 이름. GitHub Action 탭에서 보이는 이름임. 기능에는 영향X 
+on:                                                # 언제실행할건지를 정의 (이게 자동화의 핵심 트리거)
+  schedule:                                        # 정해진 시간마다 실행하겠음. (한국시간 월~금 6시,10시,14시,18시 4회)
+    - cron: "0 21 * * 0-4"                   # 06시(한국시간은 utc기준 +9h)
+    - cron: "0 1,5,9 * * 1-5"  # 10시,14시,18시 하루 4회
+  workflow_dispatch:
+  
+permissions:
+  contents: write                                  # last_id.txt에 수정가능, commit가능, push가능
+
+jobs:                                              # 실제 작업들을 정의 
+  check:                                           # job의 이름
+    runs-on: ubuntu-latest                         # GitHub가 제공하는 가상 리눅스 컴퓨터에서 실행한다는 뜻
+                                                   
+    steps:                                         # 이후부터는 가상컴퓨터에서 할일 목록
+      - name: 코드 체크아웃                         # GitHub 저장소의 코드를 가상 컴퓨터로 복사해오는 단계
+        uses: actions/checkout@v4
+
+      - name: Python 설치                           # 파이썬 3.10 설치 (왜냐면 파이썬이 없을수도 있으니깐)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 한글폰트 설치
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-nanum
+
+      - name: 라이브러리 설치                        # 리눅스 터미널 명령어 실행, 크롤링 라이브러리 설치단계
+        run: pip install requests beautifulsoup4 cloudscraper lxml pillow
+
+      - name: 공지 확인 실행                                # 메인단계
+        env:                                                # GitHub Secrets에 저장된 값을 환경변수로 주입
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python 260722_rra.py                         # 파이썬파일 실행
+
+      - name: 변경사항 커밋
+        run: |                                                    # | 는 여러줄 명령어 쓰겠다는 뜻
+          git config --global user.name "github-actions"          # 커밋할 사용자 정보설정    
+          git config --global user.email "actions@github.com"
+          git add last_id_rra.txt                                     # 변경된 파일 스테이징
+          git commit -m "Update RRA notice id" || echo "No changes"   # 커밋할 변경사항이 없으면 에러대신 No changes 출력하고 넘어감
+          git push                                                # GitHub 레포에 반영  (이게 있어서 이전 ID랑 비교가능해지는 것임)
+    
