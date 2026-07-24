@@ -297,14 +297,17 @@ def extract_hwpx_text(filepath):
 
 def analyze_document(document_text):
 
-    api_key = OPENROUTER_API_KEY
+    api_key = os.getenv("OPENROUTER_API_KEY")
+
+    if not api_key:
+        return "OPENROUTER_API_KEY 없음"
 
     prompt = f"""
-당신은 LG유플러스 NW협력팀 정책담당자이다.
+당신은 LG유플러스 NW협력팀 정책담당자이다. 이는 통신,네트워크 산업 전문 정책분석가이자 기업 전략기획 전문가이다.
 
-아래 행정예고 문서를 분석하라.
+아래 행정예고 또는 정책 문서를 분석하라.
 
-특히 다음 항목을 검토한다.
+특히 다음 항목을 중점 검토한다.
 
 - 통신사업자 영향
 - 유선/무선 네트워크 영향
@@ -312,26 +315,29 @@ def analyze_document(document_text):
 - 규제 변화
 - 비용 증가 가능성
 - 대응 필요사항
+- 아래 4개항목 중 처음 3개항목(핵심 요약, 통신업계 영향도, LG유플러스 검토사항)은 각 3개 항목으로 작성하고 마지막 항목(한줄 결론)은 1개 항목으로 작성하되, 각각의 항목은 60자 이내로 작성
+- 처음 3개항목(핵심 요약, 통신업계 영향도, LG유플러스 검토사항)의 각 항목은 반드시 "- "로 시작
+- "변화내용 + 영향 또는 검토필요성"형태로 작성
 
 출력 형식:
 
 ■ 핵심 요약
-- ...
-- ...
-- ...
+- ㅇㅇㅇㅇ
+- ㅇㅇㅇㅇ
+- ㅇㅇㅇㅇ
 
 ■ 통신업계 영향도
-- ...
-- ...
-- ...
+- ㅇㅇㅇㅇ
+- ㅇㅇㅇㅇ
+- ㅇㅇㅇㅇ
 
 ■ LG유플러스 검토사항
-- ...
-- ...
-- ...
+- ㅇㅇㅇㅇ
+- ㅇㅇㅇㅇ
+- ㅇㅇㅇㅇ
 
 ■ 한줄 결론
-...
+ㅇㅇㅇㅇ
 
 문서:
 {document_text}
@@ -347,7 +353,7 @@ def analyze_document(document_text):
         "messages": [
             {
                 "role": "system",
-                "content": "반드시 한국어만 사용"
+                "content": "반드시 한국어만 사용한다. 사고과정(reasoning)은 출력하지 말고 최종 결과만 출력한다."
             },
             {
                 "role": "user",
@@ -358,16 +364,177 @@ def analyze_document(document_text):
         "max_tokens": 3000
     }
 
-    res = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers=headers,
-        json=data,
-        timeout=180
-    )
+    try:
 
-    result = res.json()
+        print("OPENROUTER 요청 시작")
 
-    return result["choices"][0]["message"]["content"]
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=data,
+            timeout=120
+        )
+
+        # =========================
+        # 429 재시도 1회
+        # =========================
+        
+        if response.status_code == 429:
+        
+            retry_after = 10
+        
+            try:
+                err = response.json()
+        
+                retry_after = int(
+                    err["error"]["metadata"]
+                       .get("retry_after_seconds", 10)
+                )
+        
+            except:
+                pass
+        
+            print(
+                f"429 발생 → {retry_after}초 대기 후 재시도"
+            )
+        
+            time.sleep(retry_after)
+        
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=120
+            )
+
+
+      
+      
+        print("OPENROUTER 응답 수신")
+        print("STATUS:", response.status_code)
+        print(response.text[:500])
+      
+        result = response.json()
+
+
+        print("JSON 파싱 완료")
+        print(result.keys())
+                
+
+        if "choices" in result:
+            print("=" * 60)
+            print("message 확인")
+            print("=" * 60)
+            print(result["choices"][0].get("message"))
+            print("finish_reason=")
+            print(result["choices"][0].get("finish_reason"))  
+        
+        if (
+            "choices" not in result
+            or not result["choices"]
+        ):
+            return """
+        ■ 핵심 요약
+        AI 응답 없음
+        
+        ■ 통신업계 영향도
+        AI 응답 없음
+        
+        ■ LG유플러스 검토사항
+        AI 응답 없음
+        
+        ■ 한줄 결론
+        AI 응답 없음
+        """
+        
+        content = (
+            result["choices"][0]
+            .get("message", {})
+            .get("content")
+        )
+
+        print("=" * 60)
+        print("content 확인")
+        print("=" * 60)
+        print(repr(content))
+
+        print("=" * 60)
+        print("finish_reason 확인")
+        print("=" * 60)
+        
+        print(
+            result["choices"][0]
+            .get("finish_reason")
+        )
+        
+        if not content:
+            return """
+        ■ 핵심 요약
+        AI 응답 없음
+        
+        ■ 통신업계 영향도
+        AI 응답 없음
+        
+        ■ LG유플러스 검토사항
+        AI 응답 없음
+        
+        ■ 한줄 결론
+        AI 응답 없음
+        """
+        
+        return content
+        
+        if "error" in result:
+    
+            print("AI 호출 실패")
+            print(result["error"])
+    
+            return """
+■ 핵심 요약
+AI 분석 실패
+
+■ 통신업계 영향도
+AI 분석 실패
+
+■ LG유플러스 검토사항
+AI 분석 실패
+
+■ 한줄 결론
+AI 분석 실패
+"""
+    
+        return """
+■ 핵심 요약
+AI 분석 실패
+
+■ 통신업계 영향도
+AI 분석 실패
+
+■ LG유플러스 검토사항
+AI 분석 실패
+
+■ 한줄 결론
+AI 분석 실패
+"""
+    
+    except Exception as e:
+    
+        print("AI 분석 실패:", e)
+    
+        return f"""
+■ 핵심 요약
+AI 분석 실패
+
+■ 통신업계 영향도
+AI 분석 실패
+
+■ LG유플러스 검토사항
+AI 분석 실패
+
+■ 한줄 결론
+{str(e)}
+"""
+
 
 
 # =========================
