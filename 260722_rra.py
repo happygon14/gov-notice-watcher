@@ -603,6 +603,27 @@ def parse_ai_result(ai_text):
 
 
 
+def wrap_text(text, width=35):
+
+    result = []
+
+    for line in text.splitlines():
+
+        if not line.strip():
+            result.append("")
+            continue
+
+        result.extend(
+            textwrap.wrap(
+                line,
+                width=width
+            )
+        )
+
+    return "\n".join(result)
+
+
+
 
 
 #카드뉴스 생성
@@ -969,15 +990,16 @@ def main():
     
         if file_path.lower().endswith(".hwpx"):
     
-            text = extract_hwpx_text(
+            document_text = extract_hwpx_text(
                 file_path
             )
     
             print(
-                text[:3000]
+                document_text[:3000]
             )
     
             break
+          
     print("=" * 60)
     print("AI 분석 시작")
     print("=" * 60)
