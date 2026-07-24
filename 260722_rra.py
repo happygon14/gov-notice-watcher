@@ -418,7 +418,7 @@ def main():
     print("문서 추출 시작")
     print("=" * 60)
     
-    for file_path in downloaded_files:
+    for file_path in saved_files:
     
         if file_path.lower().endswith(".hwpx"):
     
