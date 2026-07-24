@@ -146,9 +146,7 @@ def get_notice_detail(detail_url):
         "html.parser"
     )
 
-    table = soup.select_one(
-        "table.table_organ0"
-    )
+    table = soup.select_one("table")
 
     rows = table.select("tr")
 
@@ -287,6 +285,28 @@ def main():
 
     print("새 행정예고 발견!")
 
+    info, files = get_notice_detail(
+        notices[0]["link"]
+    )
+    
+    print("=" * 60)
+    print("제목 :", info.get("제목", ""))
+    
+    print("담당부서 :", info.get("담당부서", ""))
+    
+    print("연락처 :", info.get("연락처", ""))
+    
+    print("기간 :", info.get("기간", ""))
+    
+    print("첨부파일")
+    for f in files:
+        print("-", f)
+    
+    print("=" * 60)
+
+
+
+  
     # 새 ID 저장
     with open(
         "last_id_rra.txt",
