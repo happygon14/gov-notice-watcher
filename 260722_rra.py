@@ -19,6 +19,10 @@ urllib3.disable_warnings()                # SSL경고메시지 숨김
 from urllib3.util.retry import Retry      # 실패시 자동 재시도 (서버 일시오류 대응)
 from requests.adapters import HTTPAdapter # requests 세션에 재시도 기능 연결
 
+  # 3-1) 카드뉴스형태 만들기
+from PIL import Image, ImageDraw, ImageFont
+import textwrap
+
   # 4) 이메일 MIME계열
 from email.mime.text import MIMEText            # 메일본문만들기
 from email.mime.multipart import MIMEMultipart  # 본문+이미지+첨부파일 합체 
@@ -534,6 +538,295 @@ AI 분석 실패
 ■ 한줄 결론
 {str(e)}
 """
+
+
+
+
+def parse_ai_result(ai_text):
+
+    summary = ""
+    impact = ""
+    review = ""
+    conclusion = ""
+
+    m = re.search(
+        r'■ 핵심 요약(.*?)■ 통신업계 영향도',
+        ai_text,
+        re.S
+    )
+    if m:
+        summary = m.group(1).strip()
+
+    m = re.search(
+        r'■ 통신업계 영향도(.*?)■ LG유플러스 검토사항',
+        ai_text,
+        re.S
+    )
+    if m:
+        impact = m.group(1).strip()
+
+    m = re.search(
+        r'■ LG유플러스 검토사항(.*?)■ 한줄 결론',
+        ai_text,
+        re.S
+    )
+    if m:
+        review = m.group(1).strip()
+
+    m = re.search(
+        r'■ 한줄 결론(.*)',
+        ai_text,
+        re.S
+    )
+    if m:
+        conclusion = m.group(1).strip()
+
+        conclusion = re.sub(
+            r'^[-•]\s*',
+            '',
+            conclusion
+        )
+      
+    return (
+        summary,
+        impact,
+        review,
+        conclusion
+    )
+
+
+
+
+
+
+#카드뉴스 생성
+
+def create_card_news(title, summary, impact, review, conclusion, write_date, dept, manager):
+
+    print("=" * 60)
+    print("카드뉴스 입력값 확인")
+    print("=" * 60)
+    print(summary[:500])
+  
+    WIDTH = 1080
+    HEIGHT = 2200
+
+    img = Image.new(
+        "RGB",
+        (WIDTH, HEIGHT),
+        "#FFFFFF"
+    )
+
+    draw = ImageDraw.Draw(img)
+
+    title_font = ImageFont.truetype(
+        FONT_TITLE,
+        46
+    )
+
+    sub_font = ImageFont.truetype(
+        FONT_TITLE,
+        32
+    )
+
+    body_font = ImageFont.truetype(
+        FONT_BODY,
+        24
+    )
+
+    small_font = ImageFont.truetype(
+        FONT_BODY,
+        22
+    )
+
+    small_bold_font = ImageFont.truetype(
+        FONT_TITLE,
+        22
+    )  
+
+    # ====================
+    # 헤더
+    # ====================
+
+    title_wrapped = wrap_text(title, 28)
+    
+    title_lines = title_wrapped.count("\n") + 1
+    
+    header_height = 90 + (title_lines * 55)
+    
+    draw.rectangle(
+        (0, 0, WIDTH, header_height),
+        fill="#C8102E"
+    )
+    
+    draw.text(
+        (40, 20),
+        "과기부 입법행정예고 분석",
+        fill="white",
+        font=sub_font
+    )
+    
+    draw.text(
+        (40, 65),
+        title_wrapped,
+        fill="white",
+        font=title_font
+    )
+    
+    # ====================
+    # 메타정보 영역
+    # ====================
+    
+    meta_y = header_height + 20
+    
+    draw.rounded_rectangle(
+        (
+            40,
+            meta_y,
+            1040,
+            meta_y + 80
+        ),
+        radius=20,
+        fill="#F2F4F7"
+    )
+    
+    draw.text(
+        (180, meta_y + 40),
+        f"작성일 : {write_date}",
+        fill="#333333",
+        font=small_bold_font,
+        anchor="mm"
+    )
+    
+    draw.text(
+        (540, meta_y + 40),
+        f"부서 : {dept}",
+        fill="#333333",
+        font=small_bold_font,
+        anchor="mm"
+    )
+    
+    draw.text(
+        (900, meta_y + 40),
+        f"담당자 : {manager}",
+        fill="#333333",
+        font=small_bold_font,
+        anchor="mm"
+    )
+    
+    y = meta_y + 110
+
+
+    def draw_box(box_title, text, y):
+
+        text = re.sub(
+            r'^\s*[-•]\s*',
+            '• ',
+            text,
+            flags=re.M
+        )
+        
+        text = text.strip()
+
+        wrapped = wrap_text(text, 42)
+    
+        line_count = wrapped.count("\n") + 1
+    
+        box_height = 90 + (line_count * 30)
+    
+        draw.rounded_rectangle(
+            (40, y, 1040, y + box_height),
+            radius=25,
+            fill="#F5F7FA"
+        )
+
+        # 제목
+        draw.text(
+            (70, y + 20),
+            box_title,
+            fill="#003366",
+            font=sub_font
+        )
+
+        # 본문
+        draw.text(
+            (70, y + 65),
+            wrapped,
+            fill="black",
+            font=body_font,
+            spacing=5
+        )
+    
+        return y + box_height + 20
+
+
+    y = draw_box(
+        "▶ 핵심요약",
+        summary,
+        y
+    )
+
+    y = draw_box(
+        "▶ 통신업계 영향",
+        impact,
+        y
+    )
+
+    y = draw_box(
+        "▶ LG유플러스 검토사항",
+        review,
+        y
+    )
+
+    conclusion_text = wrap_text(
+        conclusion,
+        45
+    )
+    
+    line_count = conclusion_text.count("\n") + 1
+
+    conclusion_height = 80 + (line_count * 35)
+  
+    draw.rounded_rectangle(
+        (40, y, 1040, y + conclusion_height),
+        radius=25,
+        fill="#E8F4FF"
+    )
+
+    draw.text(
+        (70, y + 20),
+        "▶ 한줄 결론",
+        fill="#003366",
+        font=sub_font
+    )
+
+    draw.text(
+        (540, y + 95),
+        conclusion_text,
+        fill="black",
+        font=body_font,
+        anchor="mm"
+    )
+
+
+    filename = "card_news.png"
+
+    img = img.crop(
+        (
+            0,
+            0,
+            WIDTH,
+            y + conclusion_height + 80
+        )
+    )
+    
+    img.save(filename)
+    
+    return filename
+
+
+
+
 
 
 
