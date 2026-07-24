@@ -22,6 +22,7 @@ from requests.adapters import HTTPAdapter # requests 세션에 재시도 기능 
   # 3-1) 카드뉴스형태 만들기
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+from urllib.parse import unquote
 
   # 4) 이메일 MIME계열
 from email.mime.text import MIMEText            # 메일본문만들기
@@ -53,6 +54,11 @@ adapter = HTTPAdapter(max_retries=retries)     # requests에 retry 기능 장착
 
 session.mount("https://", adapter)             # 모든 웹접속시 retry기능 적용
 session.mount("http://", adapter)
+
+   # 4) 맑은고딕 폰트추가
+FONT_TITLE = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
+FONT_BODY = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+
 
 
 
@@ -601,16 +607,9 @@ def parse_ai_result(ai_text):
 
 #카드뉴스 생성
 
-def create_card_news(
-    info.get("제목",""),
-    summary,
-    impact,
-    review,
-    conclusion,
-    info.get("기간",""),
-    info.get("담당부서",""),
-    info.get("연락처","")
-):
+
+def create_card_news(title, summary, impact, review, conclusion, write_date, dept, manager):
+
 
     print("=" * 60)
     print("카드뉴스 입력값 확인")
