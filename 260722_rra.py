@@ -208,6 +208,54 @@ def get_notice_detail(detail_url):
     return info, files
 
 
+
+
+def download_files(files):
+
+    os.makedirs(
+        "downloads",
+        exist_ok=True
+    )
+
+    saved_files = []
+
+    for f in files:
+
+        file_name = f["name"]
+
+        save_path = os.path.join(
+            "downloads",
+            file_name
+        )
+
+        print("다운로드 :", file_name)
+
+        res = session.get(
+            f["url"],
+            timeout=(10, 60),
+            verify=False
+        )
+
+        with open(
+            save_path,
+            "wb"
+        ) as fp:
+
+            fp.write(res.content)
+
+        saved_files.append(
+            save_path
+        )
+
+        print(
+            "저장완료 :",
+            save_path
+        )
+
+    return saved_files
+
+
+
 # =========================
 # 메일 보내기 (첨부 포함)
 # =========================
@@ -319,6 +367,14 @@ def main():
     
     print("=" * 60)
 
+
+    saved_files = download_files(files)
+    
+    print()
+    print("다운로드 결과")
+    
+    for f in saved_files:
+        print(f)
 
 
   
