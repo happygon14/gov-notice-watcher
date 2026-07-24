@@ -5,6 +5,7 @@
 import os                          # 운영체제(OS)기능 접근용 (파일존재확인, 환경변수읽기, 파일명처리 등)
 import smtplib                     # 이메일 전송 (SMTP서버로 메일보내기)
 import re                          # 문자패턴찾기 (게시글 제목 분석시)
+import zipfile
 
   # 2) 웹 크롤링 계열
 import requests                     # 웹사이트 접속(GET/POST)
@@ -255,6 +256,42 @@ def download_files(files):
     return saved_files
 
 
+def extract_hwpx_text(filepath):
+
+    try:
+
+        text = ""
+
+        with zipfile.ZipFile(filepath, "r") as z:
+
+            for name in z.namelist():
+
+                if (
+                    "section" in name.lower()
+                    and name.endswith(".xml")
+                ):
+
+                    xml = z.read(name)
+
+                    soup = BeautifulSoup(
+                        xml,
+                        "xml"
+                    )
+
+                    text += soup.get_text(
+                        separator=" ",
+                        strip=True
+                    )
+
+        return text
+
+    except Exception as e:
+
+        print("HWPX 추출 실패:", e)
+
+        return ""
+
+
 
 # =========================
 # 메일 보내기 (첨부 포함)
@@ -359,6 +396,7 @@ def main():
     print("기간 :", info.get("기간", ""))
     
     print("첨부파일")
+  
     for f in files:
             
         print("-" * 30)
@@ -376,6 +414,23 @@ def main():
     for f in saved_files:
         print(f)
 
+    print("=" * 60)
+    print("문서 추출 시작")
+    print("=" * 60)
+    
+    for file_path in downloaded_files:
+    
+        if file_path.lower().endswith(".hwpx"):
+    
+            text = extract_hwpx_text(
+                file_path
+            )
+    
+            print(
+                text[:3000]
+            )
+    
+            break
 
   
     # 새 ID 저장
