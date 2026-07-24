@@ -305,7 +305,7 @@ def extract_hwpx_text(filepath):
 
 
 
-def analyze_document(document_text):
+def analyze_with_ai(document_text):
 
     api_key = os.getenv("OPENROUTER_API_KEY")
 
