@@ -256,14 +256,14 @@ def main():
 
     notices = get_latest_notices(limit=3)
 
-    print("="*60)
+    latest_id = notices[0]["id"]
 
-    for n in notices:
+    print("최신 게시글:", latest_id)
 
-        print(n["id"])
-        print(n["title"])
-        print(n["link"])
-        print("-"*40)
+    with open("last_id_rra.txt", "w") as f:
+        f.write(latest_id)
+
+    print("저장 완료")
 
 
 
