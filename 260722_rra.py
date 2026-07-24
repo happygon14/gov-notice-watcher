@@ -36,8 +36,10 @@ TO_EMAIL = os.environ.get("TO_EMAIL")
 scraper = cloudscraper.create_scraper()        # create_scraper : 브라우저 하나 생성
 session = requests.Session()                   # 연결유지하는 requests 객체생성(매번 새접속없이 연결 재사용)
 retries = Retry(                               # 접속실패시 자동재시도
-    total=5,                                        # 최대 5번
-    backoff_factor=2,                               # 실패할수록 대기시간 2배씩 증가
+    total=2,                                        # 최대 5번
+    connect=2,
+    read=0,
+    backoff_factor=1,
     status_forcelist=[429,500,502,503,504],         # 이 오류코드 나오면 재시도 (429:너무많이 접속, 500:서버오류, 503:서버점검 등)
 )
 adapter = HTTPAdapter(max_retries=retries)     # requests에 retry 기능 장착
@@ -66,7 +68,7 @@ def get_latest_notices(limit=3):
     res = session.get(
         LIST_URL,
         headers=headers,
-        timeout=(30, 60),
+        timeout=(10, 20),
         verify=False
     )
 
@@ -135,7 +137,7 @@ def get_notice_detail(detail_url):
 
     res = session.get(
         detail_url,
-        timeout=(30,60),
+        timeout=(10,20),
         verify=False
     )
 
