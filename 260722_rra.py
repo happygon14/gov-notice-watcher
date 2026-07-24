@@ -863,42 +863,52 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
 # 메일 보내기 (첨부 포함)
 # =========================
 
-def send_email(info, files, link):
+def send_email(title, filepath, meta, deadline, reason, main_points, link, ai_result=""):
 
     msg = MIMEMultipart()
 
-    msg["Subject"] = "[RRA 행정예고]"
+    msg["Subject"] = f"📢 신규 행정예고 공고 - {title}"
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
 
     body = f"""
-[RRA 행정예고]
 
-제목
-{info.get('제목','')}
+    📎 Link :
+    {link}
+    """
 
-담당부서
-{info.get('담당부서','')}
-
-연락처
-{info.get('연락처','')}
-
-기간
-{info.get('기간','')}
-
-내용
-{info.get('내용','')[:1500]}
-
-첨부파일
-{chr(10).join(files)}
-
-원문
-{link}
-"""
-
-    msg.attach(
-        MIMEText(body, "plain", "utf-8")
-    )
+    msg.attach(MIMEText(body,"plain","utf-8"))
+    
+    attachments = []
+    
+    if filepath:
+    
+        if isinstance(filepath, str):
+            filepath = [filepath]
+    
+        attachments.extend(filepath)
+    
+    if os.path.exists("card_news.png"):
+        attachments.append("card_news.png")
+    
+    for fp in attachments:
+    
+        with open(fp,"rb") as f:
+            part = MIMEBase("application","octet-stream")
+            part.set_payload(f.read())
+    
+        encoders.encode_base64(part)
+    
+        part.add_header(
+            "Content-Disposition",
+            "attachment",
+            filename=Header(
+                os.path.basename(fp),
+                "utf-8"
+            ).encode()
+        )
+    
+        msg.attach(part)
 
     with smtplib.SMTP_SSL(
         "smtp.gmail.com",
@@ -911,6 +921,7 @@ def send_email(info, files, link):
         )
 
         server.send_message(msg)
+
 
 # =========================
 # 메인
