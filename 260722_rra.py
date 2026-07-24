@@ -186,12 +186,24 @@ def get_notice_detail(detail_url):
     for a in soup.select(
         'a[href*="FileDownSvl"]'
     ):
-        files.append(
-            a.get_text(
-                " ",
-                strip=True
-            )
+    
+        name = a.get_text(
+            " ",
+            strip=True
         )
+    
+        href = a.get("href", "")
+    
+        if href.startswith("/"):
+            href = (
+                "https://www.rra.go.kr"
+                + href
+            )
+    
+        files.append({
+            "name": name,
+            "url": href
+        })
 
     return info, files
 
@@ -300,7 +312,10 @@ def main():
     
     print("첨부파일")
     for f in files:
-        print("-", f)
+            
+        print("-" * 30)
+        print("파일명 :", f["name"])
+        print("URL :", f["url"])
     
     print("=" * 60)
 
