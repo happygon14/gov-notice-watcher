@@ -601,7 +601,16 @@ def parse_ai_result(ai_text):
 
 #카드뉴스 생성
 
-def create_card_news(title, summary, impact, review, conclusion, write_date, dept, manager):
+def create_card_news(
+    info.get("제목",""),
+    summary,
+    impact,
+    review,
+    conclusion,
+    info.get("기간",""),
+    info.get("담당부서",""),
+    info.get("연락처","")
+):
 
     print("=" * 60)
     print("카드뉴스 입력값 확인")
@@ -661,7 +670,7 @@ def create_card_news(title, summary, impact, review, conclusion, write_date, dep
     
     draw.text(
         (40, 20),
-        "과기부 입법행정예고 분석",
+        "국립전파연구원 행정예고 분석",
         fill="white",
         font=sub_font
     )
@@ -954,7 +963,9 @@ def main():
     print("=" * 60)
     print("문서 추출 시작")
     print("=" * 60)
-    
+
+    document_text = ""
+  
     for file_path in saved_files:
     
         if file_path.lower().endswith(".hwpx"):
@@ -972,9 +983,26 @@ def main():
     print("AI 분석 시작")
     print("=" * 60)
     
-    summary = analyze_document(text)
+    ai_result = analyze_with_ai(
+        document_text
+    )
     
-    print(summary)
+    summary, impact, review, conclusion = parse_ai_result(
+        ai_result
+    )
+    
+    card_file = create_card_news(
+        info.get("제목",""),
+        summary,
+        impact,
+        review,
+        conclusion,
+        info.get("기간",""),
+        info.get("담당부서",""),
+        info.get("연락처","")
+    )
+    
+    print("카드뉴스 생성:", card_file)
 
   
     # 새 ID 저장
