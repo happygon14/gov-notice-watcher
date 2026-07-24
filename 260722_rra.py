@@ -6,6 +6,7 @@ import os                          # 운영체제(OS)기능 접근용 (파일존
 import smtplib                     # 이메일 전송 (SMTP서버로 메일보내기)
 import re                          # 문자패턴찾기 (게시글 제목 분석시)
 import zipfile
+import json
 
   # 2) 웹 크롤링 계열
 import requests                     # 웹사이트 접속(GET/POST)
@@ -32,6 +33,7 @@ LIST_URL = "https://www.rra.go.kr/ko/notice/atnList.do"    # 국립전파연구�
 EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 TO_EMAIL = os.environ.get("TO_EMAIL")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
   # 3) 웹사이트 접속용 브라우저(자동접속(봇) 차단 우회기능 강화버전_requests의 강화버전) & 안정적기능(retry등)
 scraper = cloudscraper.create_scraper()        # create_scraper : 브라우저 하나 생성
@@ -293,6 +295,81 @@ def extract_hwpx_text(filepath):
 
 
 
+def analyze_document(document_text):
+
+    api_key = OPENROUTER_API_KEY
+
+    prompt = f"""
+당신은 LG유플러스 NW협력팀 정책담당자이다.
+
+아래 행정예고 문서를 분석하라.
+
+특히 다음 항목을 검토한다.
+
+- 통신사업자 영향
+- 유선/무선 네트워크 영향
+- 기술기준 영향
+- 규제 변화
+- 비용 증가 가능성
+- 대응 필요사항
+
+출력 형식:
+
+■ 핵심 요약
+- ...
+- ...
+- ...
+
+■ 통신업계 영향도
+- ...
+- ...
+- ...
+
+■ LG유플러스 검토사항
+- ...
+- ...
+- ...
+
+■ 한줄 결론
+...
+
+문서:
+{document_text}
+"""
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "openai/gpt-oss-20b:free",
+        "messages": [
+            {
+                "role": "system",
+                "content": "반드시 한국어만 사용"
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "temperature": 0.3,
+        "max_tokens": 3000
+    }
+
+    res = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers=headers,
+        json=data,
+        timeout=180
+    )
+
+    result = res.json()
+
+    return result["choices"][0]["message"]["content"]
+
+
 # =========================
 # 메일 보내기 (첨부 포함)
 # =========================
@@ -431,6 +508,13 @@ def main():
             )
     
             break
+    print("=" * 60)
+    print("AI 분석 시작")
+    print("=" * 60)
+    
+    summary = analyze_document(text)
+    
+    print(summary)
 
   
     # 새 ID 저장
