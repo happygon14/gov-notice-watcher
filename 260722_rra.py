@@ -262,7 +262,38 @@ def main():
 
     print("최신 게시글:", latest_id)
 
-    with open("last_id_rra.txt", "w") as f:
+    # 이전 ID 읽기
+    if os.path.exists("last_id_rra.txt"):
+
+        with open(
+            "last_id_rra.txt",
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            old_id = f.read().strip()
+
+    else:
+
+        old_id = ""
+
+    print("이전 게시글:", old_id)
+
+    # 변경 없음
+    if latest_id == old_id:
+
+        print("변경 없음")
+        return
+
+    print("새 행정예고 발견!")
+
+    # 새 ID 저장
+    with open(
+        "last_id_rra.txt",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
         f.write(latest_id)
 
     print("저장 완료")
