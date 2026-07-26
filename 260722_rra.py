@@ -134,7 +134,8 @@ def get_latest_notices(limit=3):
         notices.append({
             "id": notice_id,
             "title": title,
-            "link": detail_url
+            "link": detail_url,
+            "date": date_text
         })
 
         if len(notices) >= limit:
@@ -1031,7 +1032,7 @@ def main():
         impact,
         review,
         conclusion,
-        info.get("기간",""),
+        notice[0]["date"],
         info.get("담당부서",""),
         info.get("연락처","")
     )
