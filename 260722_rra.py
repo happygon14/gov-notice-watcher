@@ -101,7 +101,14 @@ def get_latest_notices(limit=3):
 
         if not a:
             continue
-
+            
+        tds = row.find_all("td")
+    
+        date_text = ""
+    
+        if len(tds) >= 3:
+            date_text = tds[2].get_text(strip=True)
+      
         href = a.get("href","")
 
         m = re.search(
@@ -1032,7 +1039,7 @@ def main():
         impact,
         review,
         conclusion,
-        notice[0]["date"],
+        notice[0].get("date",""),
         info.get("담당부서",""),
         info.get("연락처","")
     )
