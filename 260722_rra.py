@@ -29,6 +29,7 @@ from email.mime.text import MIMEText            # 메일본문만들기
 from email.mime.multipart import MIMEMultipart  # 본문+이미지+첨부파일 합체 
 from email.mime.base import MIMEBase            # 엑셀/이미지 첨부
 from email import encoders                      # 첨부파일 메일용 변환
+from email.mime.image import MIMEImage
 
 # 1-2. 환경변수 
   # 1) 사이트 주소 (크롤링 대상 웹사이트)
@@ -1035,6 +1036,18 @@ def main():
     )
     
     print("카드뉴스 생성:", card_file)
+
+    send_email(
+        info.get("제목",""),
+        saved_files,
+        "",
+        "",
+        "",
+        "",
+        notices[0]["link"]
+    )
+    
+    print("메일 발송 완료")
 
   
     # 새 ID 저장
