@@ -1039,7 +1039,7 @@ def main():
         impact,
         review,
         conclusion,
-        notice[0].get("date",""),
+        notices[0].get("date",""),
         info.get("담당부서",""),
         info.get("연락처","")
     )
@@ -1049,7 +1049,7 @@ def main():
     send_email(
         info.get("제목",""),
         saved_files,
-        "",
+        notices[0].get("date",""),
         "",
         "",
         "",
