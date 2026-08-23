@@ -317,7 +317,7 @@ def analyze_with_ai(document_text):
     }
 
     data = {
-        "model": "openai/gpt-oss-20b:free",
+        "model": "google/gemma-4-31b-it:free",
         "messages": [
             {
                 "role": "system",
