@@ -1,14 +1,14 @@
 # yml파일은 GitHub Action가 자동으로 파이썬을 실행하는 설계도임.
 
 # 흐름도
-# 1. 30분마다 실행
-# 2. Ubuntu 가상 컴퓨터 생성
+# 1. 평일 4회 실행
+# 2. 가상 컴퓨터 생성
 # 3. 코드 다운로드
 # 4. Python 설치
 # 5. 라이브러리 설치
-# 6. check_notice.py 실행
+# 6. 파이썬파일 실행
 # 7. 새 글이면 메일 발송
-# 8. last_id.txt 저장
+# 8. 게시글번호 last_id.txt 저장
 # 9. GitHub에 커밋
 # 10. 컴퓨터 삭제(세션 종료)
 
@@ -31,7 +31,7 @@ jobs:                                              # 실제 작업들을 정의
       - name: 코드 체크아웃                         # GitHub 저장소의 코드를 가상 컴퓨터로 복사해오는 단계
         uses: actions/checkout@v4
 
-      - name: Python 설치                           # 파이썬 3.10 설치 (왜냐면 파이썬이 없을수도 있으니깐)
+      - name: Python 설치                           # 파이썬 3.10 설치
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
