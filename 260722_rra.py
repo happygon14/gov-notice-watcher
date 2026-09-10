@@ -369,7 +369,7 @@ def analyze_with_ai(document_text):
     }
 
     data = {
-        "model": "openai/gpt-oss-20b:free",
+        "model": "openai/gpt-oss-20b",
         "messages": [
             {
                 "role": "system",
