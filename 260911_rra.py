@@ -7,6 +7,7 @@ import smtplib                     # 이메일 전송 (SMTP서버로 메일보�
 import re                          # 문자패턴찾기 (게시글 제목 분석시)
 import zipfile
 import json
+import pdfplumber                  # PDF읽기
 
   # 2) 웹 크롤링 계열
 import requests                     # 웹사이트 접속(GET/POST)
@@ -312,6 +313,30 @@ def extract_hwpx_text(filepath):
         print("HWPX 추출 실패:", e)
 
         return ""
+
+
+
+def extract_pdf_text(filepath):
+
+    text = ""
+
+    try:
+
+        with pdfplumber.open(filepath) as pdf:
+
+            for page in pdf.pages:
+
+                page_text = page.extract_text()
+
+                if page_text:
+                    text += page_text + "\n"
+
+    except Exception as e:
+
+        print("PDF 추출 실패:", e)
+
+    return text
+
 
 
 
@@ -1005,21 +1030,32 @@ def main():
     print("문서 추출 시작")
     print("=" * 60)
 
+
     document_text = ""
-  
+    
     for file_path in saved_files:
     
         if file_path.lower().endswith(".hwpx"):
     
-            document_text = extract_hwpx_text(
+            print("HWPX 읽기:", os.path.basename(file_path))
+    
+            document_text += extract_hwpx_text(
                 file_path
             )
     
-            print(
-                document_text[:3000]
+        elif file_path.lower().endswith(".pdf"):
+    
+            print("PDF 읽기:", os.path.basename(file_path))
+    
+            document_text += extract_pdf_text(
+                file_path
             )
     
-            break
+    print(document_text[:3000])
+    
+    print("전체 문서길이:", len(document_text))
+
+  
           
     print("=" * 60)
     print("AI 분석 시작")
