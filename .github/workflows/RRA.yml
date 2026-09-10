@@ -42,7 +42,7 @@ jobs:                                              # 실제 작업들을 정의
           sudo apt-get install -y fonts-nanum
 
       - name: 라이브러리 설치                        # 리눅스 터미널 명령어 실행, 크롤링 라이브러리 설치단계
-        run: pip install requests beautifulsoup4 cloudscraper lxml pillow
+        run: pip install requests beautifulsoup4 cloudscraper lxml pillow pdfplumber
 
       - name: 공지 확인 실행                                # 메인단계
         env:                                                # GitHub Secrets에 저장된 값을 환경변수로 주입
@@ -50,7 +50,7 @@ jobs:                                              # 실제 작업들을 정의
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python 260722_rra.py                         # 파이썬파일 실행
+        run: python 260911_rra.py                         # 파이썬파일 실행
 
       - name: 변경사항 커밋
         run: |                                                    # | 는 여러줄 명령어 쓰겠다는 뜻
